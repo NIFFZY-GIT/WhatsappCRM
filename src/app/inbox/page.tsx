@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   MessageSquare,
   Search,
@@ -14,9 +14,10 @@ import {
 } from 'lucide-react';
 import { Contact, ChatMessage, BotMode } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
+import { soundEffects } from '@/lib/sound';
 
 export default function InboxPage() {
-  const { selectedTenant, setUnreadTotal, notify } = useApp();
+  const { selectedTenant, setUnreadTotal, notify, soundEnabled } = useApp();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -26,8 +27,32 @@ export default function InboxPage() {
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadContacts = async (tenantId?: string) => {
-    setIsLoading(true);
+  // References for live auto-scroll and tracking
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const selectedContactRef = useRef<Contact | null>(null);
+  const lastMessagesCountRef = useRef<number>(0);
+
+  // Keep ref synchronized with state
+  useEffect(() => {
+    selectedContactRef.current = selectedContact;
+  }, [selectedContact]);
+
+  // Smooth auto-scroll to the bottom of the conversation
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior });
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom('smooth');
+  }, [messages.length]);
+
+  /**
+   * Load or silently update contacts list
+   */
+  const loadContacts = useCallback(async (tenantId?: string, silent: boolean = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const param = tenantId ? `?tenantId=${tenantId}` : '';
       const res = await fetch(`/api/conversations${param}`);
@@ -37,52 +62,122 @@ export default function InboxPage() {
         const unreadSum = data.contacts.reduce((acc: number, c: Contact) => acc + (c.unreadCount || 0), 0);
         setUnreadTotal(unreadSum);
 
-        // Keep selected contact or select the first one
-        if (selectedContact) {
-          const stillThere = data.contacts.find((c: Contact) => c.phone === selectedContact.phone);
-          if (stillThere) {
-            setSelectedContact(stillThere);
-          } else if (data.contacts.length > 0) {
-            selectContact(data.contacts[0]);
-          } else {
-            setSelectedContact(null);
-            setMessages([]);
+        // Keep currently selected contact synced
+        const currentSelected = selectedContactRef.current;
+        if (currentSelected) {
+          const matched = data.contacts.find((c: Contact) => c.phone === currentSelected.phone);
+          if (matched) {
+            setSelectedContact(matched);
           }
-        } else if (data.contacts.length > 0) {
+        } else if (!silent && data.contacts.length > 0) {
           selectContact(data.contacts[0]);
         }
       }
     } catch (err) {
-      console.error('Failed to load contacts:', err);
+      if (!silent) console.error('Failed to load contacts:', err);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
-  };
+  }, [setUnreadTotal]);
 
+  // Initial load when tenant changes
   useEffect(() => {
     if (selectedTenant) {
-      loadContacts(selectedTenant.id);
+      loadContacts(selectedTenant.id, false);
     }
-  }, [selectedTenant]);
+  }, [selectedTenant, loadContacts]);
 
+  /**
+   * Select a contact and load their messages
+   */
   const selectContact = async (c: Contact) => {
     setSelectedContact(c);
+    lastMessagesCountRef.current = 0;
     try {
       const tenantParam = selectedTenant ? `&tenantId=${selectedTenant.id}` : '';
       const res = await fetch(`/api/conversations?phone=${c.phone}${tenantParam}`);
       const data = await res.json();
       if (data.success) {
-        setMessages(data.activeMessages || []);
+        const msgs = data.activeMessages || [];
+        setMessages(msgs);
+        lastMessagesCountRef.current = msgs.length;
         // Mark contact as read locally
         setContacts((prev) =>
           prev.map((item) => (item.phone === c.phone ? { ...item, unreadCount: 0 } : item))
         );
+        setTimeout(() => scrollToBottom('auto'), 50);
       }
     } catch (err) {
       console.error(err);
     }
   };
 
+  /**
+   * REAL-TIME AUTO-SYNC: Poll open chat messages every 2 seconds without full reload!
+   */
+  useEffect(() => {
+    if (!selectedTenant || !selectedContact) return;
+
+    const phoneToWatch = selectedContact.phone;
+    const tenantIdToWatch = selectedTenant.id;
+
+    const messagePollInterval = setInterval(async () => {
+      // Only poll if this contact is still selected
+      if (selectedContactRef.current?.phone !== phoneToWatch) return;
+
+      try {
+        const res = await fetch(`/api/conversations?phone=${phoneToWatch}&tenantId=${tenantIdToWatch}`);
+        const data = await res.json();
+
+        if (data.success && data.activeMessages) {
+          const newMsgs: ChatMessage[] = data.activeMessages;
+
+          // Check if new messages arrived
+          if (newMsgs.length > lastMessagesCountRef.current) {
+            const latestMsg = newMsgs[newMsgs.length - 1];
+
+            // If the latest message was incoming from customer or generated by bot, play sound chime
+            if (latestMsg && (latestMsg.sender === 'customer' || latestMsg.sender === 'bot')) {
+              if (soundEnabled) {
+                soundEffects.playIncomingMessage();
+              }
+            }
+
+            setMessages(newMsgs);
+            lastMessagesCountRef.current = newMsgs.length;
+            setTimeout(() => scrollToBottom('smooth'), 50);
+          } else if (newMsgs.length === lastMessagesCountRef.current) {
+            // Check if status updated (e.g. sent -> delivered)
+            const hasStatusChange = newMsgs.some((m, idx) => m.status !== messages[idx]?.status);
+            if (hasStatusChange) {
+              setMessages(newMsgs);
+            }
+          }
+        }
+      } catch {
+        // Silent poll error handling
+      }
+    }, 2000);
+
+    return () => clearInterval(messagePollInterval);
+  }, [selectedTenant, selectedContact, soundEnabled, messages]);
+
+  /**
+   * REAL-TIME AUTO-SYNC: Poll contacts list every 3.5 seconds to catch new incoming leads
+   */
+  useEffect(() => {
+    if (!selectedTenant) return;
+
+    const contactPollInterval = setInterval(() => {
+      loadContacts(selectedTenant.id, true);
+    }, 3500);
+
+    return () => clearInterval(contactPollInterval);
+  }, [selectedTenant, loadContacts]);
+
+  /**
+   * Toggle Bot Mode
+   */
   const handleToggleContactMode = async (mode: BotMode) => {
     if (!selectedContact || !selectedTenant) return;
     try {
@@ -123,6 +218,9 @@ export default function InboxPage() {
     }
   };
 
+  /**
+   * Resolve Human Assistance Alert
+   */
   const handleResolveAssistance = async (phone: string) => {
     if (!selectedTenant) return;
     try {
@@ -165,6 +263,9 @@ export default function InboxPage() {
     }
   };
 
+  /**
+   * Delete single conversation
+   */
   const handleDeleteConversation = async (phone: string, contactName?: string) => {
     const label = contactName || `+${phone}`;
     if (!confirm(`Are you sure you want to delete the chat history with ${label}? This removes all messages permanently.`)) {
@@ -184,7 +285,7 @@ export default function InboxPage() {
         }
         setContacts((prev) => prev.filter((c) => c.phone !== phone));
         if (selectedTenant) {
-          await loadContacts(selectedTenant.id);
+          await loadContacts(selectedTenant.id, true);
         }
         notify({
           type: 'info',
@@ -207,6 +308,9 @@ export default function InboxPage() {
     }
   };
 
+  /**
+   * Clear all conversations
+   */
   const handleClearAllConversations = async () => {
     if (!selectedTenant) return;
     if (!confirm(`Are you sure you want to clean and delete ALL contacts and chat records for ${selectedTenant.name}?`)) {
@@ -243,12 +347,36 @@ export default function InboxPage() {
     }
   };
 
+  /**
+   * Send Manual Agent Reply with instant optimistic update
+   */
   const handleSendAgentReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedContact || !agentReplyText.trim() || !selectedTenant) return;
 
     const textToSend = agentReplyText.trim();
     setAgentReplyText('');
+
+    // Instant optimistic message in the UI so the user sees it immediately
+    const tempId = `optimistic-${Date.now()}`;
+    const optimisticMessage: ChatMessage = {
+      id: tempId,
+      tenantId: selectedTenant.id,
+      contactPhone: selectedContact.phone,
+      sender: 'agent',
+      text: textToSend,
+      timestamp: new Date().toISOString(),
+      status: 'sent',
+    };
+
+    setMessages((prev) => [...prev, optimisticMessage]);
+    lastMessagesCountRef.current += 1;
+    setTimeout(() => scrollToBottom('smooth'), 20);
+
+    if (soundEnabled) {
+      soundEffects.playOutgoingMessage();
+    }
+
     setIsSendingReply(true);
 
     try {
@@ -263,13 +391,19 @@ export default function InboxPage() {
       });
       const data = await res.json();
       if (data.success && data.message) {
-        setMessages((prev) => [...prev, data.message]);
+        // Replace optimistic message with saved message from server
+        setMessages((prev) =>
+          prev.map((m) => (m.id === tempId ? data.message : m))
+        );
         notify({
           type: 'success',
           title: 'Reply Sent to WhatsApp',
           message: `Message dispatched to ${selectedContact.name} (+${selectedContact.phone})`,
         });
       } else {
+        // Remove optimistic message if dispatch failed
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        lastMessagesCountRef.current = Math.max(0, lastMessagesCountRef.current - 1);
         notify({
           type: 'error',
           title: 'Delivery Failed',
@@ -277,6 +411,8 @@ export default function InboxPage() {
         });
       }
     } catch (err: any) {
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      lastMessagesCountRef.current = Math.max(0, lastMessagesCountRef.current - 1);
       notify({
         type: 'error',
         title: 'Send Error',
@@ -298,21 +434,27 @@ export default function InboxPage() {
       {/* Page Title & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-[#111B21] tracking-tight flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-[#075E54]" />
-            Live WhatsApp Shared Inbox
-          </h2>
-          <p className="text-xs text-[#667781]">
-            Real-time customer conversations, automated Gemini AI responses, and human takeover.
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-[#111B21] tracking-tight flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-[#075E54]" />
+              Live WhatsApp Shared Inbox
+            </h2>
+            <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#D9FDD3] border border-[#25D366]/40 text-[#075E54] text-[10px] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse" />
+              Realtime Auto-Syncing
+            </span>
+          </div>
+          <p className="text-xs text-[#667781] mt-0.5">
+            Real-time customer conversations, automated Gemini AI responses, and instant human takeover without page reload.
           </p>
         </div>
 
         <button
-          onClick={() => selectedTenant && loadContacts(selectedTenant.id)}
+          onClick={() => selectedTenant && loadContacts(selectedTenant.id, false)}
           className="px-3 py-1.5 rounded-xl border border-[#E9EDEF] bg-white hover:bg-[#F0F2F5] text-[#111B21] text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto transition cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5 text-[#667781]" />
-          Refresh Inbox
+          Manual Sync
         </button>
       </div>
 
@@ -419,12 +561,12 @@ export default function InboxPage() {
                           {c.mode === 'ai_chatbot' ? '🤖 Gemini AI' : '⚡ Auto-Reply'}
                         </span>
                         {c.needsHumanAssistance && (
-                          <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5">
+                          <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5 animate-pulse">
                             <AlertTriangle className="w-2.5 h-2.5" /> Needs Agent
                           </span>
                         )}
                         {c.unreadCount && c.unreadCount > 0 ? (
-                          <span className="bg-[#25D366] text-white text-[9px] px-1.5 rounded-full font-bold ml-auto">
+                          <span className="bg-[#25D366] text-[#111B21] text-[9px] px-1.5 rounded-full font-bold ml-auto">
                             {c.unreadCount} new
                           </span>
                         ) : null}
@@ -447,9 +589,15 @@ export default function InboxPage() {
                   {selectedContact.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-bold text-[#111B21] text-sm truncate">
-                    {selectedContact.name}
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#111B21] text-sm truncate">
+                      {selectedContact.name}
+                    </h4>
+                    <span className="flex items-center gap-1 text-[10px] text-[#00A884] font-medium bg-[#D9FDD3] px-1.5 py-0.2 rounded border border-[#25D366]/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse" />
+                      Live
+                    </span>
+                  </div>
                   <p className="text-xs text-[#667781] truncate">
                     +{selectedContact.phone} {selectedContact.notes ? `• ${selectedContact.notes}` : ''}
                   </p>
@@ -497,7 +645,7 @@ export default function InboxPage() {
             {selectedContact.needsHumanAssistance && (
               <div className="bg-rose-50 border-b border-rose-200 px-4 py-2.5 flex items-center justify-between text-xs text-rose-900 animate-in fade-in">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                  <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 animate-bounce" />
                   <span>
                     <strong>Action Needed:</strong> Customer requested human sales assistance. You can reply directly below.
                   </span>
@@ -568,6 +716,8 @@ export default function InboxPage() {
                   );
                 })
               )}
+              {/* Bottom scroll anchor */}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Human Agent Takeover Box */}
