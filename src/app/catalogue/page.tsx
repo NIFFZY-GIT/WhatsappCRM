@@ -160,11 +160,11 @@ export default function CataloguePage() {
       {/* Title & Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-emerald-600" />
+          <h2 className="text-xl font-bold text-[#111B21] tracking-tight flex items-center gap-2">
+            <ShoppingBag className="w-5 h-5 text-[#075E54]" />
             Product &amp; Service Catalogue ({selectedTenant?.name})
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[#667781] mt-1">
             Gemini AI references this live database to quote exact prices, specifications, and availability.
           </p>
         </div>
@@ -172,14 +172,14 @@ export default function CataloguePage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => selectedTenant && loadProducts(selectedTenant.id)}
-            className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition"
+            className="p-2.5 rounded-xl border border-[#E9EDEF] bg-white hover:bg-[#F0F2F5] text-[#111B21] text-xs font-semibold transition cursor-pointer"
             title="Refresh"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4 text-[#667781]" />
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition"
+            className="px-4 py-2.5 bg-[#00A884] hover:bg-[#075E54] text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Product / Service</span>
@@ -187,9 +187,9 @@ export default function CataloguePage() {
         </div>
       </div>
 
-      {/* Explanatory Banner */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/70 text-xs text-emerald-950 flex items-start gap-3 shadow-2xs">
-        <Sparkles className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+      {/* Explanatory Banner (FLAT WHATSAPP PALETTE - NO GRADIENT) */}
+      <div className="p-4 rounded-xl bg-[#D9FDD3]/50 border border-[#25D366]/40 text-xs text-[#075E54] flex items-start gap-3">
+        <Sparkles className="w-5 h-5 text-[#00A884] flex-shrink-0 mt-0.5" />
         <div className="leading-relaxed">
           <strong>Instant AI Sync:</strong> Whenever a WhatsApp customer asks about items or pricing, Gemini AI scans this table and replies immediately with accurate numbers, colors, specs, and in-stock statuses!
         </div>
@@ -197,19 +197,19 @@ export default function CataloguePage() {
 
       {/* Products Grid */}
       {isLoading ? (
-        <div className="p-12 text-center text-slate-400 text-sm">
+        <div className="p-12 text-center text-[#667781] text-sm">
           Loading catalogue items from Supabase...
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center py-16 bg-white border-2 border-dashed border-slate-200 rounded-2xl p-8">
-          <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h4 className="font-bold text-slate-700 text-sm">No products in catalogue yet</h4>
-          <p className="text-xs text-slate-400 mt-1 mb-4">
+        <div className="text-center py-16 bg-white border-2 border-dashed border-[#E9EDEF] rounded-2xl p-8">
+          <Package className="w-12 h-12 text-[#667781]/40 mx-auto mb-3" />
+          <h4 className="font-bold text-[#111B21] text-sm">No products in catalogue yet</h4>
+          <p className="text-xs text-[#667781] mt-1 mb-4">
             Add items so your Gemini AI bot can answer pricing inquiries for {selectedTenant?.name}.
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold"
+            className="px-4 py-2 bg-[#00A884] hover:bg-[#075E54] text-white rounded-xl text-xs font-semibold cursor-pointer transition"
           >
             Add First Product
           </button>
@@ -219,18 +219,18 @@ export default function CataloguePage() {
           {products.map((p) => (
             <div
               key={p.id}
-              className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition flex flex-col justify-between"
+              className="p-5 rounded-2xl border border-[#E9EDEF] bg-white hover:border-[#8696A0] transition flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium border border-slate-200">
+                  <span className="text-[10px] bg-[#F0F2F5] text-[#111B21] px-2 py-0.5 rounded font-medium border border-[#E9EDEF]">
                     {p.category || 'General'}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                         p.inStock
-                          ? 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-[#D9FDD3] text-[#075E54]'
                           : 'bg-rose-100 text-rose-800'
                       }`}
                     >
@@ -238,14 +238,14 @@ export default function CataloguePage() {
                     </span>
                     <button
                       onClick={() => handleOpenEditProduct(p)}
-                      className="text-slate-400 hover:text-emerald-600 p-1 rounded hover:bg-slate-100 transition"
+                      className="text-[#667781] hover:text-[#00A884] p-1 rounded hover:bg-[#F0F2F5] transition"
                       title="Edit product details"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDeleteProduct(p.id)}
-                      className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition"
+                      className="text-[#667781] hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition"
                       title="Delete product"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -253,15 +253,15 @@ export default function CataloguePage() {
                   </div>
                 </div>
 
-                <h4 className="font-bold text-slate-900 text-base mb-1">{p.name}</h4>
-                <p className="text-emerald-600 font-extrabold text-sm mb-2">{p.price}</p>
-                <p className="text-xs text-slate-500 leading-relaxed line-clamp-3">
+                <h4 className="font-bold text-[#111B21] text-base mb-1">{p.name}</h4>
+                <p className="text-[#075E54] font-extrabold text-sm mb-2">{p.price}</p>
+                <p className="text-xs text-[#667781] leading-relaxed line-clamp-3">
                   {p.description}
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                <span className="flex items-center gap-1 text-emerald-600 font-medium">
+              <div className="mt-4 pt-3 border-t border-[#E9EDEF] flex items-center justify-between text-[11px] text-[#667781]">
+                <span className="flex items-center gap-1 text-[#00A884] font-medium">
                   <Check className="w-3.5 h-3.5" /> AI Grounded
                 </span>
                 <span className="text-[10px]">ID: {p.id.slice(0, 10)}</span>
@@ -299,7 +299,7 @@ export default function CataloguePage() {
                   placeholder="e.g. Apple iPhone 15 (128GB)"
                   value={newProdName}
                   onChange={(e) => setNewProdName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                  className="w-full px-3 py-2 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
                 />
               </div>
 
@@ -311,10 +311,10 @@ export default function CataloguePage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. $799 or ₹74,900"
+                    placeholder="e.g. $799 or Rs. 150,000"
                     value={newProdPrice}
                     onChange={(e) => setNewProdPrice(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                    className="w-full px-3 py-2 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
                   />
                 </div>
                 <div>
@@ -323,10 +323,10 @@ export default function CataloguePage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Smartphones, Laptops..."
+                    placeholder="e.g. Web Development, Hosting..."
                     value={newProdCat}
                     onChange={(e) => setNewProdCat(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                    className="w-full px-3 py-2 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
                   />
                 </div>
               </div>
@@ -337,10 +337,10 @@ export default function CataloguePage() {
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="e.g. Colors, specs, storage capacity, warranty..."
+                  placeholder="e.g. Features, turnaround time, deliverables..."
                   value={newProdDesc}
                   onChange={(e) => setNewProdDesc(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                  className="w-full p-2.5 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
                 />
               </div>
 
@@ -350,7 +350,7 @@ export default function CataloguePage() {
                   id="stockCheckbox"
                   checked={newProdStock}
                   onChange={(e) => setNewProdStock(e.target.checked)}
-                  className="rounded text-emerald-600 focus:ring-emerald-500"
+                  className="rounded text-[#00A884] focus:ring-[#00A884]"
                 />
                 <label htmlFor="stockCheckbox" className="text-xs text-slate-700 font-medium cursor-pointer">
                   Item is currently in stock and available for order
@@ -368,9 +368,9 @@ export default function CataloguePage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow"
+                  className="px-4 py-2 bg-[#00A884] hover:bg-[#075E54] disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition cursor-pointer"
                 >
-                  {isSubmitting ? 'Saving...' : 'Add to Catalogue'}
+                  {isSubmitting ? 'Adding...' : 'Add to Catalogue'}
                 </button>
               </div>
             </form>
@@ -406,7 +406,7 @@ export default function CataloguePage() {
                   placeholder="e.g. Apple iPhone 15 (128GB)"
                   value={editProdName}
                   onChange={(e) => setEditProdName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                  className="w-full px-3 py-2 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
                 />
               </div>
 
@@ -418,10 +418,10 @@ export default function CataloguePage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. $799 or ₹74,900"
+                    placeholder="e.g. $799 or Rs. 150,000"
                     value={editProdPrice}
                     onChange={(e) => setEditProdPrice(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                    className="w-full px-3 py-2 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
                   />
                 </div>
                 <div>
@@ -430,10 +430,10 @@ export default function CataloguePage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Smartphones, Laptops..."
+                    placeholder="e.g. Web Development, Hosting..."
                     value={editProdCat}
                     onChange={(e) => setEditProdCat(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                    className="w-full px-3 py-2 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
                   />
                 </div>
               </div>
@@ -447,7 +447,7 @@ export default function CataloguePage() {
                   placeholder="e.g. Colors, specs, storage capacity, warranty..."
                   value={editProdDesc}
                   onChange={(e) => setEditProdDesc(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                  className="w-full p-2.5 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
                 />
               </div>
 
@@ -457,7 +457,7 @@ export default function CataloguePage() {
                   id="editStockCheckbox"
                   checked={editProdStock}
                   onChange={(e) => setEditProdStock(e.target.checked)}
-                  className="rounded text-emerald-600 focus:ring-emerald-500"
+                  className="rounded text-[#00A884] focus:ring-[#00A884]"
                 />
                 <label htmlFor="editStockCheckbox" className="text-xs text-slate-700 font-medium cursor-pointer">
                   Item is currently in stock and available for order
@@ -475,7 +475,7 @@ export default function CataloguePage() {
                 <button
                   type="submit"
                   disabled={isUpdating}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow"
+                  className="px-4 py-2 bg-[#00A884] hover:bg-[#075E54] disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition cursor-pointer"
                 >
                   {isUpdating ? 'Saving...' : 'Save Changes'}
                 </button>

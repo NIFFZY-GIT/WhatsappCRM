@@ -68,21 +68,21 @@ export default function SimulatorPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Title */}
       <div>
-        <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <Terminal className="w-5 h-5 text-emerald-600" />
+        <h2 className="text-xl font-bold text-[#111B21] tracking-tight flex items-center gap-2">
+          <Terminal className="w-5 h-5 text-[#075E54]" />
           Offline Customer Webhook Simulator
         </h2>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-[#667781] mt-1">
           Test conversations as an external customer without touching your phone or spending Meta API credits for{' '}
-          <strong className="text-slate-800">{selectedTenant?.name}</strong>.
+          <strong className="text-[#111B21]">{selectedTenant?.name}</strong>.
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
+      <div className="bg-white rounded-2xl border border-[#E9EDEF] p-6 sm:p-8">
         <form onSubmit={handleRunSimulator} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#111B21] mb-1">
                 Simulated Customer Phone
               </label>
               <input
@@ -90,11 +90,11 @@ export default function SimulatorPage() {
                 required
                 value={simPhone}
                 onChange={(e) => setSimPhone(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono"
+                className="w-full px-4 py-2.5 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs font-mono text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#111B21] mb-1">
                 Simulated Customer Name
               </label>
               <input
@@ -102,13 +102,13 @@ export default function SimulatorPage() {
                 required
                 value={simName}
                 onChange={(e) => setSimName(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                className="w-full px-4 py-2.5 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#111B21] mb-1">
               Customer Message
             </label>
             <textarea
@@ -116,48 +116,48 @@ export default function SimulatorPage() {
               required
               value={simMessage}
               onChange={(e) => setSimMessage(e.target.value)}
-              className="w-full p-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-sans"
-              placeholder="e.g. Can you tell me your prices? or Do you have iPhones in stock?"
+              className="w-full p-3.5 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs font-sans text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
+              placeholder="e.g. Can you tell me your prices? or Do you have web development in stock?"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSimulating}
-            className="w-full py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow transition"
+            className="w-full py-3 bg-[#00A884] hover:bg-[#075E54] disabled:opacity-50 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
           >
-            <Send className="w-4 h-4 text-emerald-400" />
+            <Send className="w-4 h-4 text-white" />
             <span>{isSimulating ? 'Simulating Message Flow...' : 'Simulate Incoming Message'}</span>
           </button>
         </form>
 
         {/* Live Simulation Result */}
         {simResult && (
-          <div className="mt-6 pt-6 border-t border-slate-100 space-y-4 animate-in fade-in">
+          <div className="mt-6 pt-6 border-t border-[#E9EDEF] space-y-4 animate-in fade-in">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase text-slate-600">
+              <span className="text-xs font-bold uppercase text-[#111B21]">
                 Simulation Pipeline Output:
               </span>
-              <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+              <span className="text-[10px] bg-[#D9FDD3] text-[#075E54] border border-[#25D366]/40 px-2 py-0.5 rounded-full font-bold">
                 Mode: {simResult.mode}
               </span>
             </div>
 
             <div className="space-y-3">
               {/* Customer Bubble */}
-              <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-xs">
-                <div className="font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+              <div className="p-4 rounded-xl bg-white border border-[#E9EDEF] text-xs shadow-xs">
+                <div className="font-bold text-[#075E54] mb-1 flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5" /> {simName} (Customer):
                 </div>
-                <p className="text-slate-800">{simResult.customerMsg}</p>
+                <p className="text-[#111B21]">{simResult.customerMsg}</p>
               </div>
 
               {/* Bot Reply Bubble */}
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs">
-                <div className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Gemini AI Bot:
+              <div className="p-4 rounded-xl bg-[#D9FDD3] border border-[#25D366]/30 text-xs shadow-xs">
+                <div className="font-bold text-[#075E54] mb-1 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#00A884]" /> Gemini AI Bot:
                 </div>
-                <p className="text-emerald-950 whitespace-pre-line leading-relaxed">
+                <p className="text-[#111B21] whitespace-pre-line leading-relaxed">
                   {simResult.botReply}
                 </p>
               </div>
@@ -166,7 +166,7 @@ export default function SimulatorPage() {
             <div className="pt-2 flex justify-end">
               <Link
                 href="/inbox"
-                className="text-xs text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1"
+                className="text-xs text-[#00A884] hover:text-[#075E54] font-bold flex items-center gap-1 transition"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
                 View in Shared Inbox
