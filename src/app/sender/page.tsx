@@ -15,7 +15,7 @@ import { BotMode } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
 
 export default function SenderPage() {
-  const { selectedTenant } = useApp();
+  const { selectedTenant, notify } = useApp();
 
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -54,20 +54,34 @@ export default function SenderPage() {
 
       if (data.success) {
         if (data.whatsapp?.success) {
+          const successMsg = `Opening WhatsApp message successfully dispatched to +${clientPhone}! Mode: ${
+            sendMode === 'ai_chatbot' ? 'Gemini AI Assistant' : 'Automated Template'
+          }.`;
           setResult({
             type: 'success',
-            message: `Opening WhatsApp message successfully dispatched to +${clientPhone}! Mode: ${
-              sendMode === 'ai_chatbot' ? 'Gemini AI Assistant' : 'Automated Template'
-            }.`,
+            message: successMsg,
             waStatus: data.whatsapp,
           });
+          notify({
+            type: 'success',
+            title: 'WhatsApp Dispatched',
+            message: `Opening greeting sent to +${clientPhone}`,
+            actionUrl: '/inbox',
+            actionLabel: 'View in Inbox',
+          });
         } else {
+          const warnMsg = `Lead saved to CRM and ready for incoming webhook, but Meta returned: ${
+            data.whatsapp?.error || 'Message dispatch pending.'
+          }`;
           setResult({
             type: 'warning',
-            message: `Lead saved to CRM and ready for incoming webhook, but Meta returned: ${
-              data.whatsapp?.error || 'Message dispatch pending.'
-            }`,
+            message: warnMsg,
             waStatus: data.whatsapp,
+          });
+          notify({
+            type: 'warning',
+            title: 'Lead Saved (Meta Pending)',
+            message: `Lead saved. Meta status: ${data.whatsapp?.error || 'Pending delivery'}`,
           });
         }
         setClientPhone('');
@@ -75,15 +89,27 @@ export default function SenderPage() {
         setClientNotes('');
         setCustomMsgOverride('');
       } else {
+        const errMsg = data.error || 'Failed to process lead intake.';
         setResult({
           type: 'error',
-          message: data.error || 'Failed to process lead intake.',
+          message: errMsg,
+        });
+        notify({
+          type: 'error',
+          title: 'Lead Intake Failed',
+          message: errMsg,
         });
       }
     } catch (err: any) {
+      const errMsg = err.message || 'Network error processing lead intake.';
       setResult({
         type: 'error',
-        message: err.message || 'Network error processing lead intake.',
+        message: errMsg,
+      });
+      notify({
+        type: 'error',
+        title: 'Network Error',
+        message: errMsg,
       });
     } finally {
       setIsSubmitting(false);

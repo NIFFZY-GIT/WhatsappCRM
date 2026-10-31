@@ -21,6 +21,7 @@ export default function TenantsPage() {
     selectedTenant,
     switchTenant,
     refreshData,
+    notify,
   } = useApp();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -56,6 +57,7 @@ export default function TenantsPage() {
       const data = await res.json();
       if (data.success && data.tenant) {
         setShowAddModal(false);
+        const nameAdded = newTenantName;
         setNewTenantName('');
         setNewTenantNumber('');
         setNewTenantPhoneId('');
@@ -64,12 +66,24 @@ export default function TenantsPage() {
         setNewTenantTemplate('');
         await refreshData();
         switchTenant(data.tenant.id);
+        notify({
+          type: 'success',
+          title: 'Client Business Created',
+          message: `${nameAdded} is now active and ready for WhatsApp messaging.`,
+        });
       } else {
-        alert(data.error || 'Failed to create business account');
+        notify({
+          type: 'error',
+          title: 'Failed to Create Business',
+          message: data.error || 'Server rejected business creation.',
+        });
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error creating business');
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error Creating Business',
+        message: err.message || 'Network error.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -82,11 +96,24 @@ export default function TenantsPage() {
       const data = await res.json();
       if (data.success) {
         await refreshData();
+        notify({
+          type: 'info',
+          title: 'Business Deleted',
+          message: 'Client business account has been removed.',
+        });
       } else {
-        alert(data.error || 'Failed to delete business');
+        notify({
+          type: 'error',
+          title: 'Delete Failed',
+          message: data.error || 'Failed to delete business.',
+        });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error Deleting Business',
+        message: err.message || 'Network error.',
+      });
     }
   };
 

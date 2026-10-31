@@ -14,7 +14,7 @@ import { BotMode } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
 
 export default function SettingsPage() {
-  const { selectedTenant, setSelectedTenant, refreshData } = useApp();
+  const { selectedTenant, setSelectedTenant, refreshData, notify } = useApp();
 
   const [editBusinessName, setEditBusinessName] = useState('');
   const [editWhatsappNumber, setEditWhatsappNumber] = useState('');
@@ -67,12 +67,24 @@ export default function SettingsPage() {
         await refreshData();
         setSavedNotice(true);
         setTimeout(() => setSavedNotice(false), 3000);
+        notify({
+          type: 'success',
+          title: 'Settings Saved to Supabase',
+          message: `Updated Gemini AI instructions and rules for ${data.tenant.name}.`,
+        });
       } else {
-        alert(data.error || 'Failed to save settings');
+        notify({
+          type: 'error',
+          title: 'Failed to Save Settings',
+          message: data.error || 'Database operation was rejected.',
+        });
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error saving settings');
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error Saving Settings',
+        message: err.message || 'Network error updating settings.',
+      });
     } finally {
       setIsSaving(false);
     }

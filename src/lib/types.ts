@@ -74,3 +74,14 @@ export interface WhatsAppSendResult {
   error?: string;
   details?: any;
 }
+
+export interface AppNotification {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message: string;
+  timestamp: string;
+  read?: boolean;
+  actionUrl?: string;
+  actionLabel?: string;
+}

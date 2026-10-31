@@ -16,7 +16,7 @@ import { Contact, ChatMessage, BotMode } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
 
 export default function InboxPage() {
-  const { selectedTenant, setUnreadTotal } = useApp();
+  const { selectedTenant, setUnreadTotal, notify } = useApp();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
@@ -102,9 +102,24 @@ export default function InboxPage() {
         setContacts((prev) =>
           prev.map((c) => (c.phone === data.contact.phone ? data.contact : c))
         );
+        notify({
+          type: 'info',
+          title: 'Bot Engine Switched',
+          message: `${selectedContact.name} is now using ${mode === 'ai_chatbot' ? 'Gemini AI Chatbot' : 'Automated Template'}.`,
+        });
+      } else {
+        notify({
+          type: 'error',
+          title: 'Engine Switch Failed',
+          message: data.error || 'Could not update contact response mode.',
+        });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Network Error',
+        message: err.message || 'Error updating response engine.',
+      });
     }
   };
 
@@ -129,9 +144,24 @@ export default function InboxPage() {
         if (selectedContact && selectedContact.phone === phone) {
           setSelectedContact({ ...selectedContact, needsHumanAssistance: false });
         }
+        notify({
+          type: 'success',
+          title: 'Assistance Handled',
+          message: `Inquiry marked as completed and resolved.`,
+        });
+      } else {
+        notify({
+          type: 'error',
+          title: 'Update Failed',
+          message: data.error || 'Could not mark assistance handled.',
+        });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Network error updating status.',
+      });
     }
   };
 
@@ -156,11 +186,24 @@ export default function InboxPage() {
         if (selectedTenant) {
           await loadContacts(selectedTenant.id);
         }
+        notify({
+          type: 'info',
+          title: 'Chat Deleted',
+          message: `Chat history with ${label} has been deleted.`,
+        });
       } else {
-        alert(data.error || 'Failed to delete chat');
+        notify({
+          type: 'error',
+          title: 'Delete Failed',
+          message: data.error || 'Failed to delete chat.',
+        });
       }
-    } catch (err) {
-      console.error('Failed to delete chat:', err);
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error Deleting Chat',
+        message: err.message || 'Network error deleting chat record.',
+      });
     }
   };
 
@@ -179,9 +222,24 @@ export default function InboxPage() {
         setSelectedContact(null);
         setMessages([]);
         setContacts([]);
+        notify({
+          type: 'info',
+          title: 'Conversations Cleared',
+          message: `Cleaned all contacts and message records for ${selectedTenant.name}.`,
+        });
+      } else {
+        notify({
+          type: 'error',
+          title: 'Clear Failed',
+          message: data.error || 'Failed to clear conversations.',
+        });
       }
-    } catch (err) {
-      console.error('Failed to clear contacts:', err);
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Network error clearing conversations.',
+      });
     }
   };
 
@@ -206,12 +264,24 @@ export default function InboxPage() {
       const data = await res.json();
       if (data.success && data.message) {
         setMessages((prev) => [...prev, data.message]);
+        notify({
+          type: 'success',
+          title: 'Reply Sent to WhatsApp',
+          message: `Message dispatched to ${selectedContact.name} (+${selectedContact.phone})`,
+        });
       } else {
-        alert(data.error || 'Failed to send WhatsApp reply');
+        notify({
+          type: 'error',
+          title: 'Delivery Failed',
+          message: data.error || 'Meta WhatsApp Cloud API could not deliver the message. Check WhatsApp phone token or customer 24-hr window.',
+        });
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error sending message');
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Send Error',
+        message: err.message || 'Network error sending agent reply.',
+      });
     } finally {
       setIsSendingReply(false);
     }

@@ -41,7 +41,7 @@ export default function Sidebar() {
       href: '/inbox',
       icon: MessageSquare,
       badge: unreadTotal > 0 ? `${unreadTotal} new` : null,
-      badgeColor: 'bg-emerald-500 text-white',
+      badgeColor: 'bg-[#25D366] text-[#111B21]',
     },
     {
       label: 'Send WhatsApp',
@@ -63,7 +63,7 @@ export default function Sidebar() {
       href: '/tenants',
       icon: Building2,
       badge: `${tenants.length}`,
-      badgeColor: 'bg-slate-200 text-slate-700',
+      badgeColor: 'bg-[#202C33] text-[#8696A0] border border-[#2A3942]',
     },
     {
       label: 'Offline Simulator',

@@ -14,7 +14,7 @@ import {
 import { useApp } from '@/context/AppContext';
 
 export default function SetupPage() {
-  const { envStatus } = useApp();
+  const { envStatus, notify } = useApp();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<any>(null);
   const [isTesting, setIsTesting] = useState(false);
@@ -23,6 +23,11 @@ export default function SetupPage() {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+    notify({
+      type: 'info',
+      title: 'Copied to Clipboard',
+      message: `${key === 'webhook_url' ? 'Callback URL' : 'Verify Token'} copied.`,
+    });
   };
 
   const handleRunDiagnostics = async () => {
@@ -32,8 +37,25 @@ export default function SetupPage() {
       const res = await fetch('/api/test-connection');
       const data = await res.json();
       setTestResults(data);
-    } catch (err) {
-      console.error(err);
+      if (data.database?.connected && data.whatsapp?.status === 'OK') {
+        notify({
+          type: 'success',
+          title: 'Diagnostics Passed',
+          message: 'WhatsApp Cloud API, Supabase, and Gemini are fully connected!',
+        });
+      } else {
+        notify({
+          type: 'warning',
+          title: 'Diagnostics Complete with Notices',
+          message: 'Review diagnostic panel below for connection specifics.',
+        });
+      }
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Diagnostic Error',
+        message: err.message || 'Failed to complete connection test.',
+      });
     } finally {
       setIsTesting(false);
     }

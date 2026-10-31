@@ -14,7 +14,7 @@ import {
 import { useApp } from '@/context/AppContext';
 
 export default function SimulatorPage() {
-  const { selectedTenant, refreshData } = useApp();
+  const { selectedTenant, refreshData, notify } = useApp();
 
   const [simPhone, setSimPhone] = useState('94772284950');
   const [simName, setSimName] = useState('Priya Sharma');
@@ -53,12 +53,26 @@ export default function SimulatorPage() {
           mode: data.mode,
         });
         await refreshData();
+        notify({
+          type: 'success',
+          title: 'Simulation Pipeline Executed',
+          message: `Received reply from Gemini AI in ${data.mode === 'ai_chatbot' ? 'AI Chatbot' : 'Template'} mode.`,
+          actionUrl: '/inbox',
+          actionLabel: 'View in Inbox',
+        });
       } else {
-        alert(data.error || 'Simulation failed');
+        notify({
+          type: 'error',
+          title: 'Simulation Pipeline Error',
+          message: data.error || 'Simulation could not be completed.',
+        });
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error running simulator');
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Error running offline simulator.',
+      });
     } finally {
       setIsSimulating(false);
     }

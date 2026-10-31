@@ -15,7 +15,7 @@ import { ProductItem } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
 
 export default function CataloguePage() {
-  const { selectedTenant } = useApp();
+  const { selectedTenant, notify } = useApp();
 
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,17 +82,31 @@ export default function CataloguePage() {
       const data = await res.json();
       if (data.success) {
         setShowAddModal(false);
+        const addedName = newProdName;
         setNewProdName('');
         setNewProdPrice('');
         setNewProdCat('');
         setNewProdDesc('');
         setNewProdStock(true);
         await loadProducts(selectedTenant.id);
+        notify({
+          type: 'success',
+          title: 'Product Added to Catalogue',
+          message: `${addedName} is now live and readable by Gemini AI.`,
+        });
       } else {
-        alert(data.error || 'Failed to add product');
+        notify({
+          type: 'error',
+          title: 'Add Product Failed',
+          message: data.error || 'Database operation was rejected.',
+        });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Network error adding product.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -129,14 +143,28 @@ export default function CataloguePage() {
       });
       const data = await res.json();
       if (data.success) {
+        const updatedName = editProdName;
         setShowEditModal(false);
         setEditingProduct(null);
         await loadProducts(selectedTenant.id);
+        notify({
+          type: 'success',
+          title: 'Product Updated',
+          message: `${updatedName} successfully saved.`,
+        });
       } else {
-        alert(data.error || 'Failed to update product');
+        notify({
+          type: 'error',
+          title: 'Update Failed',
+          message: data.error || 'Failed to update product details.',
+        });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Network error updating product.',
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -149,9 +177,24 @@ export default function CataloguePage() {
       const data = await res.json();
       if (data.success && selectedTenant) {
         await loadProducts(selectedTenant.id);
+        notify({
+          type: 'info',
+          title: 'Product Deleted',
+          message: 'Item has been removed from catalogue.',
+        });
+      } else {
+        notify({
+          type: 'error',
+          title: 'Delete Failed',
+          message: data.error || 'Failed to remove product from catalogue.',
+        });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Network error deleting product.',
+      });
     }
   };
 

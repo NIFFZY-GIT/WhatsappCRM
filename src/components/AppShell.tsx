@@ -1,12 +1,39 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import { useApp } from '@/context/AppContext';
-import { Sparkles, Building2, Phone } from 'lucide-react';
+import {
+  Sparkles,
+  Building2,
+  Phone,
+  Bell,
+  BellRing,
+  Volume2,
+  VolumeX,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  Trash2,
+} from 'lucide-react';
+import ErrorBoundary from './ErrorBoundary';
+import Link from 'next/link';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const { selectedTenant, databaseStatus } = useApp();
+  const {
+    selectedTenant,
+    databaseStatus,
+    notifications,
+    clearAllNotifications,
+    soundEnabled,
+    setSoundEnabled,
+    hasNotificationPermission,
+    requestNotificationPermission,
+  } = useApp();
+
+  const [showNotificationMenu, setShowNotificationMenu] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-sans text-[#111B21]">
@@ -37,6 +64,102 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Desktop Notification Enable Pill if not yet granted */}
+            {!hasNotificationPermission && (
+              <button
+                onClick={requestNotificationPermission}
+                className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFEAE2] text-[#075E54] hover:bg-[#D9FDD3] text-xs font-semibold border border-[#E9EDEF] transition cursor-pointer"
+                title="Enable browser notifications for incoming messages"
+              >
+                <BellRing className="w-3.5 h-3.5" />
+                <span>Enable Alerts</span>
+              </button>
+            )}
+
+            {/* Sound Toggle Button */}
+            <button
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1 transition cursor-pointer ${
+                soundEnabled
+                  ? 'bg-white border-[#E9EDEF] text-[#075E54] hover:bg-[#F0F2F5]'
+                  : 'bg-[#F0F2F5] border-[#E9EDEF] text-[#667781] hover:text-[#111B21]'
+              }`}
+              title={soundEnabled ? 'Mute audio notification chimes' : 'Unmute audio notification chimes'}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4 text-[#00A884]" /> : <VolumeX className="w-4 h-4 text-[#667781]" />}
+            </button>
+
+            {/* Notification Center Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotificationMenu(!showNotificationMenu)}
+                className="p-2 rounded-xl border border-[#E9EDEF] bg-white hover:bg-[#F0F2F5] text-[#111B21] relative transition cursor-pointer"
+                title="Notification Center & Alerts"
+              >
+                <Bell className="w-4 h-4 text-[#667781]" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#25D366] text-[#111B21] rounded-full text-[9px] font-bold flex items-center justify-center">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown Menu */}
+              {showNotificationMenu && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-[#E9EDEF] rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95">
+                  <div className="p-3.5 border-b border-[#E9EDEF] bg-[#F0F2F5] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-[#075E54]" />
+                      <span className="font-bold text-xs text-[#111B21]">Recent Alerts &amp; Events</span>
+                    </div>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={clearAllNotifications}
+                        className="text-[10px] text-[#667781] hover:text-rose-600 font-semibold flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto divide-y divide-[#E9EDEF]">
+                    {notifications.length === 0 ? (
+                      <div className="p-6 text-center text-[#667781] text-xs">
+                        <CheckCircle2 className="w-8 h-8 text-[#00A884] mx-auto mb-2 opacity-60" />
+                        No active alerts. All systems running normally!
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div key={n.id} className="p-3 hover:bg-[#F0F2F5] transition text-xs flex items-start gap-2.5">
+                          <div className="flex-shrink-0 mt-0.5">
+                            {n.type === 'success' && <CheckCircle2 className="w-4 h-4 text-[#25D366]" />}
+                            {n.type === 'error' && <AlertCircle className="w-4 h-4 text-rose-500" />}
+                            {n.type === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-500" />}
+                            {n.type === 'info' && <Info className="w-4 h-4 text-[#00A884]" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-[#111B21] text-[11px] truncate">{n.title}</p>
+                            <p className="text-[11px] text-[#667781] leading-relaxed break-words">{n.message}</p>
+                            {n.actionUrl && (
+                              <Link
+                                href={n.actionUrl}
+                                onClick={() => setShowNotificationMenu(false)}
+                                className="inline-block mt-1 text-[10px] text-[#00A884] font-bold hover:underline"
+                              >
+                                {n.actionLabel || 'View →'}
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Status Badges */}
             <div className="flex items-center gap-2 text-xs">
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0F2F5] text-[#111B21] font-medium border border-[#E9EDEF]">
                 <span
@@ -55,9 +178,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page Content wrapped in Error Boundary */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
       </div>
     </div>
