@@ -392,6 +392,36 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteConversation = async (phone: string, contactName?: string) => {
+    const label = contactName || `+${phone}`;
+    if (!confirm(`Are you sure you want to delete the chat history with ${label}? This will remove all messages and lead data.`)) {
+      return;
+    }
+
+    try {
+      const tenantParam = selectedTenant ? `&tenantId=${selectedTenant.id}` : '';
+      const res = await fetch(`/api/conversations?phone=${phone}${tenantParam}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (selectedContact?.phone === phone) {
+          setSelectedContact(null);
+          setMessages([]);
+        }
+        setContacts((prev) => prev.filter((c) => c.phone !== phone));
+        if (selectedTenant) {
+          await loadData(selectedTenant.id);
+        }
+      } else {
+        alert(data.error || 'Failed to delete chat');
+      }
+    } catch (err) {
+      console.error('Failed to delete chat:', err);
+      alert('Error deleting chat');
+    }
+  };
+
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProdName.trim() || !newProdPrice.trim() || !selectedTenant) return;
@@ -1138,7 +1168,7 @@ export default function Dashboard() {
                       <div
                         key={c.id}
                         onClick={() => selectContact(c)}
-                        className={`p-3.5 cursor-pointer transition flex items-start gap-3 ${
+                        className={`group p-3.5 cursor-pointer transition flex items-start gap-3 ${
                           isSelected
                             ? 'bg-emerald-50/70 border-l-4 border-emerald-600'
                             : 'hover:bg-slate-100/70'
@@ -1152,12 +1182,24 @@ export default function Dashboard() {
                             <span className="font-semibold text-slate-900 text-xs truncate">
                               {c.name}
                             </span>
-                            <span className="text-[10px] text-slate-400">
-                              {new Date(c.lastMessageAt).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <span className="text-[10px] text-slate-400">
+                                {new Date(c.lastMessageAt).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteConversation(c.phone, c.name);
+                                }}
+                                title="Delete this chat"
+                                className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-rose-600 rounded transition"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                           <p className="text-[11px] text-slate-500 truncate">
                             +{c.phone}
@@ -1225,14 +1267,23 @@ export default function Dashboard() {
                       {selectedContact.mode === 'ai_chatbot' ? (
                         <>
                           <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                          <span>Gemini AI (Click to switch)</span>
+                          <span>Gemini AI</span>
                         </>
                       ) : (
                         <>
                           <Zap className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Automated Template (Click to switch)</span>
+                          <span>Auto-Template</span>
                         </>
                       )}
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteConversation(selectedContact.phone, selectedContact.name)}
+                      title="Delete this chat"
+                      className="text-xs px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition flex items-center gap-1.5 font-medium shadow-sm"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Delete Chat</span>
                     </button>
                   </div>
                 </div>

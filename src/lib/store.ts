@@ -575,6 +575,40 @@ export async function getMessagesForContact(phone: string, tenantId?: string): P
     .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 }
 
+export async function deleteConversation(phone: string, tenantId?: string): Promise<boolean> {
+  const cleanPhone = phone.replace(/\D/g, '');
+  const activeTenantId = tenantId || 'tenant_zevarone';
+
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase
+        .from('messages')
+        .delete()
+        .eq('contact_phone', cleanPhone)
+        .eq('tenant_id', activeTenantId);
+
+      await supabase
+        .from('contacts')
+        .delete()
+        .eq('phone', cleanPhone)
+        .eq('tenant_id', activeTenantId);
+    } catch (e) {
+      console.error('Supabase deleteConversation error:', e);
+    }
+  }
+
+  const local = ensureLocalStore();
+  local.messages = local.messages.filter(
+    (m) => !(m.contactPhone.replace(/\D/g, '') === cleanPhone && (!tenantId || m.tenantId === tenantId))
+  );
+  local.contacts = local.contacts.filter(
+    (c) => !(c.phone.replace(/\D/g, '') === cleanPhone && (!tenantId || c.tenantId === tenantId))
+  );
+  saveLocalStore(local);
+  return true;
+}
+
 export async function markContactRead(phone: string, tenantId?: string): Promise<void> {
   const cleanPhone = phone.replace(/\D/g, '');
   const activeTenantId = tenantId || 'tenant_zevarone';

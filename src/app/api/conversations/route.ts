@@ -7,6 +7,7 @@ import {
   upsertContact,
   getTenant,
   setContactHumanAssistance,
+  deleteConversation,
 } from '@/lib/store';
 import { sendWhatsAppTextMessage, formatPhoneNumber } from '@/lib/whatsapp';
 
@@ -106,6 +107,48 @@ export async function POST(req: NextRequest) {
       success: true,
       message,
       whatsappStatus: waResult,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { success: false, error: err.message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Delete a chat conversation (messages & contact)
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    const searchParams = req.nextUrl.searchParams;
+    let phone = searchParams.get('phone');
+    let tenantId = searchParams.get('tenantId') || undefined;
+
+    // Check JSON body if not in query params
+    if (!phone) {
+      try {
+        const body = await req.json();
+        phone = body.phone;
+        tenantId = body.tenantId || tenantId;
+      } catch (e) {
+        // ignore body parse failure
+      }
+    }
+
+    if (!phone) {
+      return NextResponse.json(
+        { success: false, error: 'Phone parameter is required' },
+        { status: 400 }
+      );
+    }
+
+    const cleanPhone = formatPhoneNumber(phone);
+    await deleteConversation(cleanPhone, tenantId);
+
+    return NextResponse.json({
+      success: true,
+      message: `Conversation for +${cleanPhone} successfully deleted`,
     });
   } catch (err: any) {
     return NextResponse.json(
