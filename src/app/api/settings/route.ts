@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSettings, updateSettings } from '@/lib/store';
 import { getWhatsAppConfig } from '@/lib/whatsapp';
 import { getGeminiApiKey } from '@/lib/gemini';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { isSupabaseConfigured, getSupabaseDetails } from '@/lib/supabase';
 
 export async function GET() {
   const settings = await getSettings();
@@ -14,6 +14,7 @@ export async function GET() {
     database: {
       type: isSupabaseConfigured() ? 'supabase' : 'local_file',
       connected: isSupabaseConfigured(),
+      details: getSupabaseDetails(),
     },
     envStatus: {
       hasWhatsAppToken: Boolean(waConfig.token),
