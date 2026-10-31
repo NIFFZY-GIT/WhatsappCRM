@@ -2,7 +2,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ChatMessage, ProductItem } from './types';
 
 export function getGeminiApiKey(): string {
-  return process.env.GEMINI_API_KEY?.trim() || '';
+  return (
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GEMINI_API_KEY ||
+    ''
+  ).trim();
 }
 
 export function getGeminiModelName(): string {

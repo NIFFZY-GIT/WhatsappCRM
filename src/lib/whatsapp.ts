@@ -18,11 +18,36 @@ export function cleanWhatsAppToken(token: string): string {
 }
 
 export function getWhatsAppConfig() {
-  const configuredVerifyToken = process.env.WHATSAPP_VERIFY_TOKEN?.trim();
+  const configuredVerifyToken = (
+    process.env.WHATSAPP_VERIFY_TOKEN ||
+    process.env.VERIFY_TOKEN ||
+    ''
+  ).trim();
+
+  const token = (
+    process.env.WHATSAPP_TOKEN ||
+    process.env.WHATSAPP_ACCESS_TOKEN ||
+    process.env.META_ACCESS_TOKEN ||
+    ''
+  ).trim();
+
+  const phoneNumberId = (
+    process.env.WHATSAPP_PHONE_NUMBER_ID ||
+    process.env.PHONE_NUMBER_ID ||
+    ''
+  ).trim();
+
+  const wabaId = (
+    process.env.WHATSAPP_BUSINESS_ACCOUNT_ID ||
+    process.env.WABA_ID ||
+    process.env.BUSINESS_ACCOUNT_ID ||
+    ''
+  ).trim();
+
   return {
-    token: cleanWhatsAppToken(process.env.WHATSAPP_TOKEN || ''),
-    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID?.trim() || '',
-    wabaId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID?.trim() || '',
+    token: cleanWhatsAppToken(token),
+    phoneNumberId,
+    wabaId,
     verifyToken: configuredVerifyToken || 'v2Bfr7BVfZAkIiYP5G5rZBFukMKYvejXTV9XmcbNL28y2yT',
     apiVersion: process.env.WHATSAPP_API_VERSION?.trim() || 'v21.0',
   };
