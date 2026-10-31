@@ -172,7 +172,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
               <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#D9FDD3] text-[#075E54] font-semibold border border-[#25D366]/40">
                 <Sparkles className="w-3 h-3 text-[#075E54]" />
-                Gemini 3.8-Flash
+                Gemini Flash AI
               </span>
             </div>
           </div>

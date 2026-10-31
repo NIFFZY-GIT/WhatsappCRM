@@ -262,7 +262,7 @@ export default function SenderPage() {
                   </span>
                 </div>
                 <p className="text-xs text-[#667781] pl-6">
-                  Engages using Gemini 3.8 Flash trained on your live product catalogue and pricing.
+                  Engages using Gemini Flash AI trained on your live product catalogue and pricing.
                 </p>
               </div>
             </div>

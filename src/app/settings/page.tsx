@@ -240,7 +240,7 @@ export default function SettingsPage() {
                 Gemini AI Persona &amp; System Instructions
               </span>
               <span className="text-[10px] text-[#075E54] font-bold bg-[#EFEAE2] border border-[#E9EDEF] px-2 py-0.5 rounded">
-                Model: gemini-3.8-flash
+                Model: gemini-flash-lite-latest
               </span>
             </label>
             <textarea

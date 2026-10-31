@@ -270,7 +270,7 @@ export default function Sidebar() {
               Gemini Engine
             </span>
             <span className="font-semibold text-[#E9EDEF] text-[10px] bg-[#202C33] px-2 py-0.5 rounded border border-[#2A3942]">
-              3.8-Flash ⚡
+              Gemini Flash ⚡
             </span>
           </div>
 
