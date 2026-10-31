@@ -72,13 +72,54 @@ export async function generateGeminiReply({
 
   const finalSystemPrompt = `${basePrompt}${catalogueContext}`;
 
-  const recentMessages = history.slice(-10);
-  const formattedHistory = recentMessages
-    .filter((m) => m.text && m.text.trim().length > 0)
-    .map((m) => ({
-      role: m.sender === 'customer' ? 'user' : 'model',
-      parts: [{ text: m.text }],
-    }));
+  // SANITIZE MULTITURN HISTORY FOR GEMINI API:
+  // 1. Exclude the current customer message if it was already saved in DB/history tail
+  const rawHistory = [...history];
+  if (
+    rawHistory.length > 0 &&
+    rawHistory[rawHistory.length - 1].sender === 'customer' &&
+    rawHistory[rawHistory.length - 1].text?.trim() === customerMessage.trim()
+  ) {
+    rawHistory.pop();
+  }
+
+  // 2. Map and merge consecutive turns of the same role (and strip canned fallback loops)
+  const cleanTurns: { role: 'user' | 'model'; text: string }[] = [];
+  for (const m of rawHistory) {
+    if (!m.text || !m.text.trim()) continue;
+    // Skip previous fallback canned replies so they don't pollute AI memory
+    if (m.sender !== 'customer' && m.text.includes('An agent will respond shortly!')) {
+      continue;
+    }
+
+    const role: 'user' | 'model' = m.sender === 'customer' ? 'user' : 'model';
+    if (cleanTurns.length > 0 && cleanTurns[cleanTurns.length - 1].role === role) {
+      cleanTurns[cleanTurns.length - 1].text += `\n${m.text.trim()}`;
+    } else {
+      cleanTurns.push({ role, text: m.text.trim() });
+    }
+  }
+
+  // 3. Gemini API Rule: First message in history MUST be role 'user'
+  while (cleanTurns.length > 0 && cleanTurns[0].role !== 'user') {
+    cleanTurns.shift();
+  }
+
+  // 4. Gemini API Rule: Last message in history MUST be role 'model' (chat.sendMessage will add the next 'user' turn)
+  while (cleanTurns.length > 0 && cleanTurns[cleanTurns.length - 1].role !== 'model') {
+    cleanTurns.pop();
+  }
+
+  // 5. Keep only the most recent 10 turns (5 full alternating user/model dialogue turns)
+  const sliced = cleanTurns.slice(-10);
+  while (sliced.length > 0 && sliced[0].role !== 'user') {
+    sliced.shift();
+  }
+
+  const formattedHistory = sliced.map((t) => ({
+    role: t.role,
+    parts: [{ text: t.text }],
+  }));
 
   let lastError: any = null;
 
