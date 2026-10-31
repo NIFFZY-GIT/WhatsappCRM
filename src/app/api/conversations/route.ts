@@ -8,6 +8,7 @@ import {
   getTenant,
   setContactHumanAssistance,
   deleteConversation,
+  clearAllConversations,
 } from '@/lib/store';
 import { sendWhatsAppTextMessage, formatPhoneNumber } from '@/lib/whatsapp';
 
@@ -124,6 +125,16 @@ export async function DELETE(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     let phone = searchParams.get('phone');
     let tenantId = searchParams.get('tenantId') || undefined;
+    const clearAll = searchParams.get('clearAll') === 'true';
+
+    // If clearing all conversations for this tenant
+    if (clearAll) {
+      await clearAllConversations(tenantId);
+      return NextResponse.json({
+        success: true,
+        message: 'All conversations and leads cleared successfully',
+      });
+    }
 
     // Check JSON body if not in query params
     if (!phone) {
@@ -131,6 +142,13 @@ export async function DELETE(req: NextRequest) {
         const body = await req.json();
         phone = body.phone;
         tenantId = body.tenantId || tenantId;
+        if (body.clearAll) {
+          await clearAllConversations(tenantId);
+          return NextResponse.json({
+            success: true,
+            message: 'All conversations and leads cleared successfully',
+          });
+        }
       } catch (e) {
         // ignore body parse failure
       }

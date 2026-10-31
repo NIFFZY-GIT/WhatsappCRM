@@ -433,6 +433,28 @@ export default function Dashboard() {
     }
   };
 
+  const handleClearAllConversations = async () => {
+    if (!selectedTenant) return;
+    if (!confirm(`Are you sure you want to clean and delete ALL contacts and chat records for ${selectedTenant.name}?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/conversations?clearAll=true&tenantId=${selectedTenant.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedContact(null);
+        setMessages([]);
+        setContacts([]);
+        await loadData(selectedTenant.id);
+      }
+    } catch (err) {
+      console.error('Failed to clear contacts:', err);
+    }
+  };
+
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProdName.trim() || !newProdPrice.trim() || !selectedTenant) return;
@@ -1195,9 +1217,20 @@ export default function Dashboard() {
                     <h3 className="font-bold text-slate-900 text-base">Inquiries</h3>
                     <p className="text-[11px] text-slate-500">{selectedTenant?.name}</p>
                   </div>
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                    {contacts.length} leads
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+                      {contacts.length} leads
+                    </span>
+                    {contacts.length > 0 && (
+                      <button
+                        onClick={handleClearAllConversations}
+                        title="Clean and delete all leads"
+                        className="text-[11px] text-slate-400 hover:text-rose-600 font-medium transition"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="relative">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
