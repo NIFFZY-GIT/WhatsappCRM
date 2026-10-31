@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const tenantId = searchParams.get('tenantId') || undefined;
 
-    const products = getProducts(tenantId);
+    const products = await getProducts(tenantId);
     return NextResponse.json({ success: true, products });
   } catch (err: any) {
     return NextResponse.json(
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const product = upsertProduct({
+    const product = await upsertProduct({
       id,
       tenantId,
       name: name.trim(),
@@ -59,7 +59,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const deleted = deleteProduct(id);
+    const deleted = await deleteProduct(id);
     return NextResponse.json({ success: deleted });
   } catch (err: any) {
     return NextResponse.json(

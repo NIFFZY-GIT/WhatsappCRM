@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTenants, getTenant, upsertTenant, deleteTenant } from '@/lib/store';
+import { getTenants, upsertTenant, deleteTenant } from '@/lib/store';
 
 export async function GET() {
-  const tenants = getTenants();
+  const tenants = await getTenants();
   return NextResponse.json({ success: true, tenants });
 }
 
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const tenant = upsertTenant(body);
+    const tenant = await upsertTenant(body);
     return NextResponse.json({ success: true, tenant });
   } catch (err: any) {
     return NextResponse.json(
@@ -38,7 +38,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const deleted = deleteTenant(id);
+    const deleted = await deleteTenant(id);
     if (!deleted) {
       return NextResponse.json(
         { success: false, error: 'Cannot delete the only existing business account' },

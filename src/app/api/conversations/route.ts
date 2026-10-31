@@ -16,12 +16,12 @@ export async function GET(req: NextRequest) {
     const phone = searchParams.get('phone');
     const tenantId = searchParams.get('tenantId') || undefined;
 
-    const contacts = getContacts(tenantId);
+    const contacts = await getContacts(tenantId);
 
     if (phone) {
       const cleanPhone = formatPhoneNumber(phone);
-      markContactRead(cleanPhone, tenantId);
-      const messages = getMessagesForContact(cleanPhone, tenantId);
+      await markContactRead(cleanPhone, tenantId);
+      const messages = await getMessagesForContact(cleanPhone, tenantId);
       return NextResponse.json({
         success: true,
         contacts,
@@ -57,17 +57,17 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanPhone = formatPhoneNumber(phone);
-    const tenant = tenantId ? getTenant(tenantId) : undefined;
+    const tenant = tenantId ? await getTenant(tenantId) : undefined;
 
     // If updating human assistance status
     if (action === 'toggle_human') {
-      setContactHumanAssistance(cleanPhone, Boolean(body.needsHumanAssistance), tenantId);
+      await setContactHumanAssistance(cleanPhone, Boolean(body.needsHumanAssistance), tenantId);
       return NextResponse.json({ success: true, needsHumanAssistance: Boolean(body.needsHumanAssistance) });
     }
 
     // If updating contact mode or metadata
     if (action === 'update_mode' && mode) {
-      const updated = upsertContact({
+      const updated = await upsertContact({
         tenantId,
         phone: cleanPhone,
         mode,
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    const message = addMessage({
+    const message = await addMessage({
       tenantId: tenant?.id,
       contactPhone: cleanPhone,
       sender: 'agent',

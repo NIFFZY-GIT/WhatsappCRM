@@ -30,14 +30,14 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanPhone = formatPhoneNumber(phone);
-    const settings = getSettings();
-    const tenants = getTenants();
-    const tenant = (tenantId ? getTenant(tenantId) : null) || tenants[0];
+    const settings = await getSettings();
+    const tenants = await getTenants();
+    const tenant = (tenantId ? await getTenant(tenantId) : null) || tenants[0];
 
     const mode: BotMode = chosenMode || tenant?.defaultMode || settings.defaultMode;
 
     // 1. Save or update contact in store
-    const contact = upsertContact({
+    const contact = await upsertContact({
       tenantId: tenant?.id,
       phone: cleanPhone,
       name: name.trim() || `Client +${cleanPhone}`,
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     );
 
     // 4. Record message in store
-    const recordedMessage = addMessage({
+    const recordedMessage = await addMessage({
       tenantId: tenant?.id,
       contactPhone: cleanPhone,
       sender: mode === 'ai_chatbot' ? 'bot' : 'agent',

@@ -29,14 +29,14 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanPhone = formatPhoneNumber(phone);
-    const settings = getSettings();
-    const tenants = getTenants();
-    const tenant = (tenantId ? getTenant(tenantId) : null) || tenants[0];
+    const settings = await getSettings();
+    const tenants = await getTenants();
+    const tenant = (tenantId ? await getTenant(tenantId) : null) || tenants[0];
 
     // 1. Get or create contact
-    let contact = getContact(cleanPhone, tenant?.id);
+    let contact = await getContact(cleanPhone, tenant?.id);
     if (!contact) {
-      contact = upsertContact({
+      contact = await upsertContact({
         tenantId: tenant?.id,
         phone: cleanPhone,
         name: name || `Simulated Client (+${cleanPhone})`,
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Add customer message
-    const customerMsg = addMessage({
+    const customerMsg = await addMessage({
       tenantId: tenant?.id,
       contactPhone: cleanPhone,
       sender: 'customer',
@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
     let botReplyText = '';
 
     if (activeMode === 'ai_chatbot') {
-      const history = getMessagesForContact(cleanPhone, tenant?.id);
-      const tenantProducts = getProducts(tenant?.id);
+      const history = await getMessagesForContact(cleanPhone, tenant?.id);
+      const tenantProducts = await getProducts(tenant?.id);
       const aiResponse = await generateGeminiReply({
         customerMessage: message.trim(),
         history,
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Add bot reply
-    const botMsg = addMessage({
+    const botMsg = await addMessage({
       tenantId: tenant?.id,
       contactPhone: cleanPhone,
       sender: 'bot',

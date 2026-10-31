@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     // MULTI-TENANT RESOLUTION: Find which client business received this message!
     const incomingPhoneNumberId = value?.metadata?.phone_number_id;
-    const tenant = getTenantByPhoneNumberId(incomingPhoneNumberId);
+    const tenant = await getTenantByPhoneNumberId(incomingPhoneNumberId);
 
     const incomingMsg = messages[0];
     const customerPhone = formatPhoneNumber(incomingMsg.from);
@@ -96,12 +96,12 @@ export async function POST(req: NextRequest) {
       incomingText = `[Received ${incomingMsg.type} message]`;
     }
 
-    const settings = getSettings();
+    const settings = await getSettings();
 
     // Find or create contact associated with this specific tenant business
-    let contact = getContact(customerPhone, tenant.id);
+    let contact = await getContact(customerPhone, tenant.id);
     if (!contact) {
-      contact = upsertContact({
+      contact = await upsertContact({
         tenantId: tenant.id,
         phone: customerPhone,
         name: customerProfileName,
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save incoming customer message in CRM
-    addMessage({
+    await addMessage({
       tenantId: tenant.id,
       contactPhone: customerPhone,
       sender: 'customer',
@@ -127,10 +127,10 @@ export async function POST(req: NextRequest) {
 
     if (activeMode === 'ai_chatbot') {
       // 1. Fetch conversation history for this tenant
-      const history = getMessagesForContact(customerPhone, tenant.id);
+      const history = await getMessagesForContact(customerPhone, tenant.id);
 
       // 2. Call Gemini AI with this tenant's custom persona prompt, catalogue & optional custom API key
-      const tenantProducts = getProducts(tenant.id);
+      const tenantProducts = await getProducts(tenant.id);
       const aiReply = await generateGeminiReply({
         customerMessage: incomingText,
         history,
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
       );
 
       // 4. Save Bot response
-      addMessage({
+      await addMessage({
         tenantId: tenant.id,
         contactPhone: customerPhone,
         sender: 'bot',
@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
         }
       );
 
-      addMessage({
+      await addMessage({
         tenantId: tenant.id,
         contactPhone: customerPhone,
         sender: 'bot',
