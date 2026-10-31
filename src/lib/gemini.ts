@@ -11,15 +11,17 @@ export function getGeminiApiKey(): string {
 }
 
 export function getGeminiModelName(): string {
-  return process.env.GEMINI_MODEL?.trim() || 'gemini-flash-lite-latest';
+  const envModel = process.env.GEMINI_MODEL?.trim();
+  if (envModel && envModel !== 'gemini-3.8-flash' && envModel !== 'gemini-2.5-flash') {
+    return envModel;
+  }
+  return 'gemini-flash-lite-latest';
 }
 
 const FALLBACK_MODELS = [
   'gemini-flash-lite-latest',
   'gemini-flash-latest',
   'gemini-2.5-flash-lite',
-  'gemini-2.5-flash',
-  'gemini-1.5-flash',
 ];
 
 /**
@@ -91,13 +93,20 @@ export async function generateGeminiReply({
         history: formattedHistory.length > 0 ? formattedHistory : undefined,
       });
 
-      const result = await chat.sendMessage(customerMessage);
+      const generatePromise = chat.sendMessage(customerMessage);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Timeout on model ${modelName}`)), 7000)
+      );
+
+      const result = await Promise.race([generatePromise, timeoutPromise]);
       const response = await result.response;
       const text = response.text();
 
-      return {
-        text: text?.trim() || 'Thank you for your message! How can I assist you further today?',
-      };
+      if (text && text.trim().length > 0) {
+        return {
+          text: text.trim(),
+        };
+      }
     } catch (err: any) {
       lastError = err;
       console.warn(`Model ${modelName} failed:`, err?.message || err);

@@ -56,6 +56,8 @@ export async function POST(req: NextRequest) {
     const activeMode = contact.mode || tenant?.defaultMode || settings.defaultMode;
     let botReplyText = '';
 
+    let aiError: string | undefined;
+
     if (activeMode === 'ai_chatbot') {
       const history = await getMessagesForContact(cleanPhone, tenant?.id);
       const tenantProducts = await getProducts(tenant?.id);
@@ -68,6 +70,7 @@ export async function POST(req: NextRequest) {
         products: tenantProducts,
       });
       botReplyText = aiResponse.text;
+      aiError = aiResponse.error;
     } else {
       const template = tenant?.automatedTemplate || settings.automatedTemplate;
       botReplyText = template
@@ -92,6 +95,7 @@ export async function POST(req: NextRequest) {
       mode: activeMode,
       customerMessage: customerMsg,
       botReply: botMsg,
+      aiError,
     });
   } catch (err: any) {
     console.error('Simulator error:', err);

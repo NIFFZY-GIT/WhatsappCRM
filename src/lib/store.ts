@@ -21,7 +21,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     'Hello {{name}}! 👋 Thank you for connecting with {{businessName}}.\n\nWe have received your message and our team will assist you shortly.\n\nReply anytime to speak with our AI agent or request human sales assistance!',
   geminiSystemPrompt:
     'You are a professional, helpful, and courteous AI assistant. Answer inquiries, share exact prices and specs from the catalogue, and notify human agents when needed.',
-  geminiModel: 'gemini-3.8-flash',
+  geminiModel: 'gemini-flash-lite-latest',
   autoReplyEnabled: true,
 };
 
