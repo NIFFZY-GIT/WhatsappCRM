@@ -154,6 +154,88 @@ export async function sendWhatsAppTextMessage(
 }
 
 /**
+ * Send a pre-approved template message to a client via WhatsApp Cloud API
+ */
+export async function sendWhatsAppTemplateMessage(
+  recipientPhone: string,
+  templateName: string,
+  languageCode: string = 'en_US',
+  components?: any[],
+  options?: {
+    token?: string;
+    phoneNumberId?: string;
+    apiVersion?: string;
+  }
+): Promise<WhatsAppSendResult> {
+  const defaultConfig = getWhatsAppConfig();
+  const token = cleanWhatsAppToken(options?.token || defaultConfig.token);
+  const phoneNumberId = options?.phoneNumberId?.trim() || defaultConfig.phoneNumberId;
+  const apiVersion = options?.apiVersion?.trim() || defaultConfig.apiVersion;
+
+  const formattedPhone = formatPhoneNumber(recipientPhone);
+
+  if (!token || !phoneNumberId) {
+    return {
+      success: false,
+      error: 'WhatsApp credentials missing. Please set WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID in .env',
+    };
+  }
+
+  const endpoint = `${GRAPH_API_BASE}/${apiVersion}/${phoneNumberId}/messages`;
+
+  const payload: any = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: formattedPhone,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: {
+        code: languageCode,
+      },
+    },
+  };
+
+  if (components && components.length > 0) {
+    payload.template.components = components;
+  }
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      const errorMsg = data?.error?.message || data?.error?.error_user_msg || res.statusText;
+      return {
+        success: false,
+        error: errorMsg,
+        details: data.error,
+      };
+    }
+
+    const messageId = data?.messages?.[0]?.id;
+    return {
+      success: true,
+      messageId,
+      details: data,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || 'Network error communicating with WhatsApp Cloud API',
+    };
+  }
+}
+
+/**
  * Mark a message as read in WhatsApp
  */
 export async function markWhatsAppMessageAsRead(messageId: string): Promise<boolean> {

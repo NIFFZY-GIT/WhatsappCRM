@@ -6,7 +6,7 @@ import {
   getTenant,
   getTenants,
 } from '@/lib/store';
-import { sendWhatsAppTextMessage, formatPhoneNumber } from '@/lib/whatsapp';
+import { sendWhatsAppTextMessage, sendWhatsAppTemplateMessage, formatPhoneNumber } from '@/lib/whatsapp';
 import { generateGeminiReply } from '@/lib/gemini';
 import { BotMode } from '@/lib/types';
 
@@ -19,6 +19,8 @@ export async function POST(req: NextRequest) {
       notes = '',
       mode: chosenMode,
       customMessage,
+      templateName,
+      templateLanguage,
       tenantId,
     } = body;
 
@@ -68,14 +70,29 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Dispatch message via WhatsApp Cloud API with tenant's specific credentials
-    const waResult = await sendWhatsAppTextMessage(
-      cleanPhone,
-      messageToSend,
-      {
-        token: tenant?.whatsappToken,
-        phoneNumberId: tenant?.phoneNumberId,
-      }
-    );
+    let waResult;
+    if (templateName) {
+      messageToSend = `[Template: ${templateName}]`;
+      waResult = await sendWhatsAppTemplateMessage(
+        cleanPhone,
+        templateName,
+        templateLanguage || 'en_US',
+        undefined,
+        {
+          token: tenant?.whatsappToken,
+          phoneNumberId: tenant?.phoneNumberId,
+        }
+      );
+    } else {
+      waResult = await sendWhatsAppTextMessage(
+        cleanPhone,
+        messageToSend,
+        {
+          token: tenant?.whatsappToken,
+          phoneNumberId: tenant?.phoneNumberId,
+        }
+      );
+    }
 
     // 4. Record message in store
     const recordedMessage = await addMessage({
