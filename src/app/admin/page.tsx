@@ -732,8 +732,8 @@ export default function AdminMonitorPage() {
 
       {/* MASTER ADMIN: EDIT COMPANY DETAILS MODAL */}
       {editingWorkspace && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 max-w-xl w-full p-6 animate-in fade-in zoom-in-95 my-8 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 animate-in fade-in zoom-in-95 my-auto shadow-2xl">
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
               <div>
                 <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">

@@ -317,7 +317,7 @@ export default function CataloguePage() {
       {/* MODAL: ADD PRODUCT / SERVICE */}
       {showAddModal && selectedTenant && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full p-6 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-emerald-600" />
@@ -424,7 +424,7 @@ export default function CataloguePage() {
       {/* MODAL: EDIT PRODUCT / SERVICE */}
       {showEditModal && selectedTenant && editingProduct && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full p-6 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
                 <Pencil className="w-5 h-5 text-emerald-600" />

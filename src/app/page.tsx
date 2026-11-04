@@ -531,7 +531,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <img
-              src="/zevaroneassets/Asset 22.png"
+              src="/zevaroneassets/Asset 24.png"
               alt="ZEVARONE. CRM"
               className="h-8 sm:h-9 w-auto object-contain transition group-hover:opacity-90"
             />
@@ -989,7 +989,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <img
-              src="/zevaroneassets/Asset 22.png"
+              src="/zevaroneassets/Asset 24.png"
               alt="ZEVARONE. CRM"
               className="h-7 w-auto object-contain"
             />

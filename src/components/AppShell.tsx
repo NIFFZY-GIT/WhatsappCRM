@@ -219,14 +219,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Page Content wrapped in Error Boundary */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className={`flex-1 ${pathname === '/inbox' ? 'p-2 sm:p-4 md:p-6' : 'p-3 sm:p-6 lg:p-8'} max-w-7xl w-full mx-auto`}>
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
         </main>
 
-        {/* Global Footer with Powered by Zevarone */}
-        <footer className="mt-auto py-3.5 px-6 sm:px-8 border-t border-[#E9EDEF] bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#667781]">
+        {/* Global Footer - hidden on mobile in inbox to maximize chat conversation window */}
+        <footer className={`mt-auto py-3.5 px-6 sm:px-8 border-t border-[#E9EDEF] bg-white flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#667781] ${pathname === '/inbox' ? 'hidden md:flex' : 'flex'}`}>
           <div className="flex items-center gap-3 text-[#667781] flex-wrap">
             <span className="font-semibold text-[#111B21]">© {new Date().getFullYear()} ZEVARONE</span>
             <span className="text-slate-300 hidden sm:inline">&bull;</span>

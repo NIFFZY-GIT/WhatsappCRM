@@ -1080,7 +1080,7 @@ function BillingContent() {
             if (e.target === e.currentTarget && !cancelLoading) setConfirmAction(null);
           }}
         >
-          <div role="alertdialog" aria-modal="true" className="modal-in w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+          <div role="alertdialog" aria-modal="true" className="modal-in w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-5 sm:p-6 shadow-2xl">
             <div
               className={`flex h-11 w-11 items-center justify-center rounded-xl ${
                 confirmAction === 'cancel' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-[#008069]'

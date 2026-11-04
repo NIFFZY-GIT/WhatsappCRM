@@ -330,7 +330,7 @@ export default function TenantsPage() {
       {/* MODAL: ADD CLIENT BUSINESS */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-[#E9EDEF] max-w-lg w-full p-6 animate-in fade-in zoom-in-95">
+          <div className="bg-white rounded-2xl border border-[#E9EDEF] max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between pb-4 border-b border-[#E9EDEF] mb-4">
               <h3 className="font-bold text-[#111B21] text-lg flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-[#075E54]" />
@@ -477,7 +477,7 @@ export default function TenantsPage() {
       {/* MODAL: EDIT CLIENT BUSINESS DETAILS */}
       {editingTenant && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-[#E9EDEF] max-w-lg w-full p-6 animate-in fade-in zoom-in-95 my-8">
+          <div className="bg-white rounded-2xl border border-[#E9EDEF] max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 animate-in fade-in zoom-in-95 my-8">
             <div className="flex items-center justify-between pb-4 border-b border-[#E9EDEF] mb-4">
               <div>
                 <h3 className="font-bold text-[#111B21] text-lg flex items-center gap-2">

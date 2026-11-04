@@ -20,6 +20,8 @@ import {
   Loader2,
   Download,
   FileSpreadsheet,
+  ArrowLeft,
+  ShieldCheck,
 } from 'lucide-react';
 import { Contact, ChatMessage, BotMode } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
@@ -93,7 +95,10 @@ export default function InboxPage() {
             setSelectedContact(matched);
           }
         } else if (!silent && data.contacts.length > 0) {
-          selectContact(data.contacts[0]);
+          // Auto-select first contact only on desktop screens so mobile opens on the lead list
+          if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+            selectContact(data.contacts[0]);
+          }
         }
       }
     } catch (err) {
@@ -566,8 +571,8 @@ export default function InboxPage() {
 
   return (
     <div className="space-y-4">
-      {/* Page Title & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Page Title & Controls - hide on mobile when a chat is open to maximize conversation area */}
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${selectedContact ? 'hidden md:flex' : 'flex'}`}>
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-[#111B21] tracking-tight flex items-center gap-2">
@@ -607,9 +612,9 @@ export default function InboxPage() {
       </div>
 
       {/* Main Inbox Card Container */}
-      <div className="bg-white rounded-2xl border border-[#E9EDEF] overflow-hidden h-[calc(100vh-210px)] min-h-[580px] flex flex-col md:flex-row">
+      <div className="bg-white rounded-2xl border border-[#E9EDEF] overflow-hidden h-[calc(100dvh-135px)] md:h-[calc(100vh-210px)] min-h-[460px] md:min-h-[580px] flex flex-col md:flex-row">
         {/* Left Column: Contacts list */}
-        <div className="w-full md:w-80 lg:w-96 border-r border-[#E9EDEF] flex flex-col bg-white">
+        <div className={`w-full md:w-80 lg:w-96 border-r border-[#E9EDEF] flex-col bg-white ${selectedContact ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-4 border-b border-[#E9EDEF] bg-[#F0F2F5]">
             <div className="flex items-center justify-between mb-3">
               <div>
@@ -731,35 +736,46 @@ export default function InboxPage() {
         {selectedContact ? (
           <div className="flex-1 flex flex-col bg-[#EFEAE2] min-w-0">
             {/* Active Contact Header */}
-            <div className="p-4 bg-[#F0F2F5] border-b border-[#E9EDEF] flex items-center justify-between">
-              <div className="flex items-center space-x-3 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-[#00A884] text-white font-bold flex items-center justify-center text-sm flex-shrink-0">
+            <div className="p-3 sm:p-4 bg-[#F0F2F5] border-b border-[#E9EDEF] flex items-center justify-between gap-2">
+              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                {/* Back button for mobile navigation */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedContact(null)}
+                  className="md:hidden p-1.5 -ml-1 text-[#667781] hover:text-[#111B21] hover:bg-[#E9EDEF] rounded-xl transition cursor-pointer"
+                  title="Back to conversations"
+                  aria-label="Back to contacts list"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#00A884] text-white font-bold flex items-center justify-center text-xs sm:text-sm flex-shrink-0">
                   {selectedContact.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-[#111B21] text-sm truncate">
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-bold text-[#111B21] text-xs sm:text-sm truncate">
                       {selectedContact.name}
                     </h4>
-                    <span className="flex items-center gap-1 text-[10px] text-[#00A884] font-medium bg-[#D9FDD3] px-1.5 py-0.2 rounded border border-[#25D366]/30">
+                    <span className="flex items-center gap-1 text-[9px] sm:text-[10px] text-[#00A884] font-medium bg-[#D9FDD3] px-1.5 py-0.2 rounded border border-[#25D366]/30 shrink-0">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse" />
                       Live
                     </span>
                   </div>
-                  <p className="text-xs text-[#667781] truncate">
+                  <p className="text-[11px] sm:text-xs text-[#667781] truncate">
                     +{selectedContact.phone} {selectedContact.notes ? `• ${selectedContact.notes}` : ''}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
                 <button
                   onClick={() =>
                     handleToggleContactMode(
                       selectedContact.mode === 'ai_chatbot' ? 'automated' : 'ai_chatbot'
                     )
                   }
-                  className={`text-xs px-3 py-1.5 rounded-lg border font-medium flex items-center gap-1.5 transition cursor-pointer ${
+                  className={`text-xs px-2 sm:px-3 py-1.5 rounded-lg border font-medium flex items-center gap-1.5 transition cursor-pointer ${
                     selectedContact.mode === 'ai_chatbot'
                       ? 'bg-[#D9FDD3] border-[#25D366]/50 text-[#075E54] hover:bg-[#D9FDD3]/80'
                       : 'bg-white border-[#E9EDEF] text-[#111B21] hover:bg-[#F0F2F5]'
@@ -768,12 +784,14 @@ export default function InboxPage() {
                   {selectedContact.mode === 'ai_chatbot' ? (
                     <>
                       <Sparkles className="w-3.5 h-3.5 text-[#00A884]" />
-                      <span>Zevarone AI</span>
+                      <span className="hidden sm:inline">Zevarone AI</span>
+                      <span className="sm:hidden text-[11px]">AI</span>
                     </>
                   ) : (
                     <>
                       <Zap className="w-3.5 h-3.5 text-[#075E54]" />
-                      <span>Auto-Template</span>
+                      <span className="hidden sm:inline">Auto-Template</span>
+                      <span className="sm:hidden text-[11px]">Auto</span>
                     </>
                   )}
                 </button>
@@ -781,7 +799,7 @@ export default function InboxPage() {
                 <button
                   onClick={() => handleDeleteConversation(selectedContact.phone, selectedContact.name)}
                   title="Delete this chat"
-                  className="text-xs px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition flex items-center gap-1.5 font-medium cursor-pointer"
+                  className="text-xs p-1.5 sm:px-3 sm:py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition flex items-center gap-1.5 font-medium cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Delete Chat</span>
@@ -1132,10 +1150,17 @@ export default function InboxPage() {
             )}
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center p-8 text-center text-[#667781]">
-            <div>
-              <MessageSquare className="w-12 h-12 text-[#667781]/40 mx-auto mb-3" />
-              <p className="text-sm font-medium">Select a conversation from the left to inspect chat</p>
+          <div className="hidden md:flex flex-1 items-center justify-center p-8 text-center text-[#667781] bg-[#F0F2F5]">
+            <div className="max-w-xs space-y-2">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-[#EFEAE2] flex items-center justify-center text-[#075E54] border border-[#E9EDEF]">
+                <MessageSquare className="w-7 h-7 text-[#075E54]" />
+              </div>
+              <h4 className="font-bold text-[#111B21] text-sm">No Chat Selected</h4>
+              <p className="text-xs text-[#667781]">Select a customer conversation from the left to view messages and reply live.</p>
+              <div className="pt-2 flex items-center justify-center gap-1.5 text-[11px] text-[#667781]">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#00A884]" />
+                <span>Protected by Meta Cloud API</span>
+              </div>
             </div>
           </div>
         )}
