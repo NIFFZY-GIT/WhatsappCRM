@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Tenant, AppSettings, AppNotification } from '@/lib/types';
+import { Tenant, AppSettings, AppNotification, UserAccount } from '@/lib/types';
 import { soundEffects } from '@/lib/sound';
 import NotificationToast from '@/components/NotificationToast';
 
@@ -21,6 +21,11 @@ interface AppContextType {
   selectedTenant: Tenant | null;
   setSelectedTenant: (t: Tenant) => void;
   switchTenant: (tenantId: string) => void;
+  currentUser: UserAccount | null;
+  setCurrentUser: (u: UserAccount | null) => void;
+  isProUser: boolean;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   settings: AppSettings | null;
   envStatus: EnvStatus | null;
   databaseStatus: { type: string; connected: boolean } | null;
@@ -46,6 +51,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [envStatus, setEnvStatus] = useState<EnvStatus | null>(null);
   const [databaseStatus, setDatabaseStatus] = useState<{ type: string; connected: boolean } | null>(null);
@@ -142,24 +148,78 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications([]);
   };
 
+  const isProUser = currentUser ? currentUser.subscriptionStatus === 'active' : true;
+
+  const refreshUser = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      if (data.success && data.user) {
+        setCurrentUser(data.user);
+        if (data.tenant) {
+          setSelectedTenant(data.tenant);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch auth state:', err);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setCurrentUser(null);
+      notify({
+        type: 'info',
+        title: 'Logged Out',
+        message: 'You have been safely signed out.',
+      });
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
   const refreshData = async () => {
     try {
-      const [tRes, sRes] = await Promise.all([
+      const [tRes, sRes, uRes] = await Promise.all([
         fetch('/api/tenants'),
         fetch('/api/settings'),
+        fetch('/api/auth/me'),
       ]);
 
       const tData = await tRes.json();
       const sData = await sRes.json();
+      const uData = await uRes.json();
+
+      let activeUser: UserAccount | null = null;
+      if (uData.success && uData.user) {
+        activeUser = uData.user;
+        setCurrentUser(uData.user);
+      }
 
       if (tData.success && tData.tenants) {
         setTenants(tData.tenants);
 
-        // Restore selected tenant from localStorage or fallback
-        const savedId = typeof window !== 'undefined' ? localStorage.getItem('selected_tenant_id') : null;
-        const matched = savedId ? tData.tenants.find((t: Tenant) => t.id === savedId) : null;
-        const current = matched || tData.tenants[0] || null;
-        setSelectedTenant(current);
+        // If user is tied to a specific tenant, prioritize it
+        if (activeUser && activeUser.tenantId) {
+          const userTenant = tData.tenants.find((t: Tenant) => t.id === activeUser.tenantId);
+          if (userTenant) {
+            setSelectedTenant(userTenant);
+          } else if (uData.tenant) {
+            setSelectedTenant(uData.tenant);
+          }
+        } else {
+          // Restore selected tenant from localStorage or fallback
+          const savedId = typeof window !== 'undefined' ? localStorage.getItem('selected_tenant_id') : null;
+          const matched = savedId ? tData.tenants.find((t: Tenant) => t.id === savedId) : null;
+          const current = matched || tData.tenants[0] || null;
+          setSelectedTenant(current);
+        }
       }
 
       if (sData.settings) setSettings(sData.settings);
@@ -253,6 +313,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         selectedTenant,
         setSelectedTenant,
         switchTenant,
+        currentUser,
+        setCurrentUser,
+        isProUser,
+        logout,
+        refreshUser,
         settings,
         envStatus,
         databaseStatus,

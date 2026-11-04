@@ -87,6 +87,21 @@ export interface WhatsAppSendResult {
   details?: any;
 }
 
+export interface UserAccount {
+  id: string;
+  email: string;
+  passwordHash?: string;
+  name: string;
+  businessName: string;
+  tenantId: string;
+  role: 'admin' | 'owner' | 'member';
+  subscriptionStatus: 'active' | 'inactive' | 'trial';
+  subscriptionPlan?: string;
+  stripeCustomerId?: string;
+  stripeSessionId?: string;
+  createdAt: string;
+}
+
 export interface AppNotification {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';

@@ -31,6 +31,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     setSoundEnabled,
     hasNotificationPermission,
     requestNotificationPermission,
+    currentUser,
   } = useApp();
 
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
@@ -178,12 +179,50 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
+        {/* Inactive Subscription Warning Banner */}
+        {currentUser && currentUser.subscriptionStatus === 'inactive' && (
+          <div className="bg-[#111B21] text-[#E9EDEF] px-6 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs border-b border-[#2A3942]">
+            <div className="flex items-center gap-2 text-center sm:text-left">
+              <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+              <span>
+                <strong>Subscription Action Required:</strong> Activate your 5,000 LKR/month plan to enable AI responses and outbound campaigns for <strong>{currentUser.businessName}</strong>.
+              </span>
+            </div>
+            <Link
+              href="/billing"
+              className="px-3.5 py-1 bg-[#00A884] hover:bg-[#008069] text-white font-bold rounded-lg text-xs transition shrink-0 shadow-sm"
+            >
+              Pay 5,000 LKR with Stripe &rarr;
+            </Link>
+          </div>
+        )}
+
         {/* Page Content wrapped in Error Boundary */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
         </main>
+
+        {/* Global Footer with Powered by Zevarone */}
+        <footer className="mt-auto py-4 px-6 sm:px-8 border-t border-[#E9EDEF] bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#667781]">
+          <div className="flex items-center gap-2">
+            <span>© {new Date().getFullYear()} WhatsApp Business CRM &amp; Gemini AI Hub</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-semibold text-[#8696A0] uppercase tracking-wider">
+              Powered by
+            </span>
+            <div className="h-7 px-3.5 py-1 bg-[#111B21] rounded-lg flex items-center justify-center shadow-2xs hover:bg-[#202C33] transition">
+              <img
+                src="/newlogos/Asset 13.svg"
+                alt="ZEVARONE"
+                className="h-3.5 w-auto object-contain"
+              />
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

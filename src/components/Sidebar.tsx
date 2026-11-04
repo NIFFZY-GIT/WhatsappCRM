@@ -18,6 +18,10 @@ import {
   X,
   Phone,
   Zap,
+  CreditCard,
+  User,
+  LogOut,
+  LogIn,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 
@@ -27,6 +31,9 @@ export default function Sidebar() {
     tenants,
     selectedTenant,
     switchTenant,
+    currentUser,
+    logout,
+    isProUser,
     databaseStatus,
     envStatus,
     unreadTotal,
@@ -57,6 +64,13 @@ export default function Sidebar() {
       label: 'AI & Automations',
       href: '/settings',
       icon: Settings,
+    },
+    {
+      label: 'Billing (5,000 LKR)',
+      href: '/billing',
+      icon: CreditCard,
+      badge: isProUser ? 'Pro' : 'Pay',
+      badgeColor: isProUser ? 'bg-[#00A884] text-white' : 'bg-amber-400 text-[#111B21]',
     },
     {
       label: 'Client Businesses',
@@ -241,6 +255,49 @@ export default function Sidebar() {
           })}
         </nav>
 
+        {/* User Account / SaaS Auth Section */}
+        <div className="p-3 border-t border-[#2A3942] bg-[#111B21]">
+          {currentUser ? (
+            <div className="flex items-center justify-between p-2 rounded-xl bg-[#202C33] border border-[#2A3942]">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-[#00A884] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-white truncate">{currentUser.name}</div>
+                  <div className="text-[10px] text-[#8696A0] truncate">{currentUser.businessName}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Link
+                  href="/billing"
+                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                    isProUser ? 'bg-[#00A884] text-white' : 'bg-amber-400 text-black'
+                  }`}
+                  title={isProUser ? 'Active Pro Tier' : 'Upgrade to Pro'}
+                >
+                  {isProUser ? 'PRO' : 'UPGRADE'}
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  title="Sign out"
+                  className="p-1 rounded text-[#8696A0] hover:text-red-400 hover:bg-[#2A3942] transition"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="w-full py-2 px-3 rounded-xl bg-[#202C33] hover:bg-[#2A3942] border border-[#2A3942] text-xs font-semibold text-[#25D366] flex items-center justify-center gap-2 transition"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In / Switch Account
+            </Link>
+          )}
+        </div>
+
         {/* Bottom System & Database Status */}
         <div className="p-4 border-t border-[#2A3942] bg-[#0C1317] text-[11px] space-y-2.5">
           <div className="flex items-center justify-between">
@@ -274,7 +331,16 @@ export default function Sidebar() {
             </span>
           </div>
 
-          <div className="pt-2 border-t border-[#2A3942] flex items-center justify-between text-[10px] text-[#8696A0]">
+          <div className="pt-2 border-t border-[#2A3942] flex items-center justify-between">
+            <span className="text-[10px] text-[#8696A0] uppercase font-semibold tracking-wider">Powered by</span>
+            <img
+              src="/newlogos/Asset 13.svg"
+              alt="ZEVARONE"
+              className="h-3 w-auto object-contain opacity-90 hover:opacity-100 transition"
+            />
+          </div>
+
+          <div className="pt-1.5 flex items-center justify-between text-[10px] text-[#8696A0]">
             <Link href="/privacy" className="hover:text-[#E9EDEF] transition">
               Privacy Policy
             </Link>

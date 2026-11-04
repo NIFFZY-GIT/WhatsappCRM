@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Contact, ChatMessage, AppSettings, Tenant, ProductItem, BotMode } from './types';
+import { Contact, ChatMessage, AppSettings, Tenant, ProductItem, BotMode, UserAccount } from './types';
 import { getSupabase } from './supabase';
 
 const DATA_DIR = path.join(process.cwd(), '.data');
@@ -12,6 +12,7 @@ interface StoreData {
   contacts: Contact[];
   messages: ChatMessage[];
   settings: AppSettings;
+  users?: UserAccount[];
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -103,6 +104,7 @@ function ensureLocalStore(): StoreData {
       contacts: parsed.contacts || [],
       messages: parsed.messages || [],
       settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) },
+      users: parsed.users || [],
     };
   } catch (err) {
     return {
@@ -111,6 +113,7 @@ function ensureLocalStore(): StoreData {
       contacts: [],
       messages: [],
       settings: DEFAULT_SETTINGS,
+      users: [],
     };
   }
 }
@@ -766,4 +769,78 @@ export async function updateSettings(newSettings: Partial<AppSettings>): Promise
   }
 
   return local.settings;
+}
+
+/* ==================== USERS & SUBSCRIPTION ==================== */
+
+export async function getUsers(): Promise<UserAccount[]> {
+  const local = ensureLocalStore();
+  return local.users || [];
+}
+
+export async function getUserByEmail(email: string): Promise<UserAccount | undefined> {
+  const users = await getUsers();
+  const cleanEmail = email.toLowerCase().trim();
+  return users.find((u) => u.email.toLowerCase().trim() === cleanEmail);
+}
+
+export async function getUserById(id: string): Promise<UserAccount | undefined> {
+  const users = await getUsers();
+  return users.find((u) => u.id === id);
+}
+
+export async function upsertUser(user: Partial<UserAccount> & { email: string; name: string }): Promise<UserAccount> {
+  const local = ensureLocalStore();
+  if (!local.users) local.users = [];
+
+  const cleanEmail = user.email.toLowerCase().trim();
+  const existingIdx = local.users.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
+
+  const now = new Date().toISOString();
+  const userObj: UserAccount = {
+    id: user.id || local.users[existingIdx]?.id || 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+    email: cleanEmail,
+    passwordHash: user.passwordHash || local.users[existingIdx]?.passwordHash || '',
+    name: user.name || local.users[existingIdx]?.name || 'User',
+    businessName: user.businessName || local.users[existingIdx]?.businessName || 'My Business',
+    tenantId: user.tenantId || local.users[existingIdx]?.tenantId || 'tenant_zevarone',
+    role: user.role || local.users[existingIdx]?.role || 'owner',
+    subscriptionStatus: user.subscriptionStatus || local.users[existingIdx]?.subscriptionStatus || 'inactive',
+    subscriptionPlan: user.subscriptionPlan || local.users[existingIdx]?.subscriptionPlan || 'Monthly Premium (5,000 LKR)',
+    stripeCustomerId: user.stripeCustomerId || local.users[existingIdx]?.stripeCustomerId,
+    stripeSessionId: user.stripeSessionId || local.users[existingIdx]?.stripeSessionId,
+    createdAt: local.users[existingIdx]?.createdAt || now,
+  };
+
+  if (existingIdx >= 0) {
+    local.users[existingIdx] = { ...local.users[existingIdx], ...userObj };
+  } else {
+    local.users.push(userObj);
+  }
+
+  saveLocalStore(local);
+  return userObj;
+}
+
+export async function updateUserSubscription(
+  userIdOrEmail: string,
+  status: 'active' | 'inactive' | 'trial',
+  stripeData?: { customerId?: string; sessionId?: string; plan?: string }
+): Promise<UserAccount | undefined> {
+  const local = ensureLocalStore();
+  if (!local.users) local.users = [];
+
+  const idx = local.users.findIndex(
+    (u) => u.id === userIdOrEmail || u.email.toLowerCase().trim() === userIdOrEmail.toLowerCase().trim()
+  );
+
+  if (idx >= 0) {
+    local.users[idx].subscriptionStatus = status;
+    if (stripeData?.customerId) local.users[idx].stripeCustomerId = stripeData.customerId;
+    if (stripeData?.sessionId) local.users[idx].stripeSessionId = stripeData.sessionId;
+    if (stripeData?.plan) local.users[idx].subscriptionPlan = stripeData.plan;
+    saveLocalStore(local);
+    return local.users[idx];
+  }
+  return undefined;
 }
