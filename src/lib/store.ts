@@ -773,7 +773,37 @@ export async function updateSettings(newSettings: Partial<AppSettings>): Promise
 
 /* ==================== USERS & SUBSCRIPTION ==================== */
 
+const SUPABASE_USERS_STORE_ID = 888;
+
 export async function getUsers(): Promise<UserAccount[]> {
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('automated_template')
+        .eq('id', SUPABASE_USERS_STORE_ID)
+        .maybeSingle();
+
+      if (!error && data?.automated_template) {
+        try {
+          const parsed = JSON.parse(data.automated_template);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Also sync local memory store
+            const local = ensureLocalStore();
+            local.users = parsed;
+            saveLocalStore(local);
+            return parsed;
+          }
+        } catch (e) {
+          console.warn('Failed to parse Supabase users store JSON:', e);
+        }
+      }
+    } catch (err) {
+      console.warn('Supabase getUsers error, falling back to local store:', err);
+    }
+  }
+
   const local = ensureLocalStore();
   return local.users || [];
 }
@@ -790,35 +820,58 @@ export async function getUserById(id: string): Promise<UserAccount | undefined> 
 }
 
 export async function upsertUser(user: Partial<UserAccount> & { email: string; name: string }): Promise<UserAccount> {
-  const local = ensureLocalStore();
-  if (!local.users) local.users = [];
-
   const cleanEmail = user.email.toLowerCase().trim();
-  const existingIdx = local.users.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
+  const currentUsers = await getUsers();
+  const existingIdx = currentUsers.findIndex((u) => u.email.toLowerCase().trim() === cleanEmail);
 
   const now = new Date().toISOString();
   const userObj: UserAccount = {
-    id: user.id || local.users[existingIdx]?.id || 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+    id: user.id || currentUsers[existingIdx]?.id || 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
     email: cleanEmail,
-    passwordHash: user.passwordHash || local.users[existingIdx]?.passwordHash || '',
-    name: user.name || local.users[existingIdx]?.name || 'User',
-    businessName: user.businessName || local.users[existingIdx]?.businessName || 'My Business',
-    tenantId: user.tenantId || local.users[existingIdx]?.tenantId || 'tenant_zevarone',
-    role: user.role || local.users[existingIdx]?.role || 'owner',
-    subscriptionStatus: user.subscriptionStatus || local.users[existingIdx]?.subscriptionStatus || 'inactive',
-    subscriptionPlan: user.subscriptionPlan || local.users[existingIdx]?.subscriptionPlan || 'Monthly Premium (5,000 LKR)',
-    stripeCustomerId: user.stripeCustomerId || local.users[existingIdx]?.stripeCustomerId,
-    stripeSessionId: user.stripeSessionId || local.users[existingIdx]?.stripeSessionId,
-    createdAt: local.users[existingIdx]?.createdAt || now,
+    passwordHash: user.passwordHash || currentUsers[existingIdx]?.passwordHash || '',
+    name: user.name || currentUsers[existingIdx]?.name || 'User',
+    businessName: user.businessName || currentUsers[existingIdx]?.businessName || 'My Business',
+    tenantId: user.tenantId || currentUsers[existingIdx]?.tenantId || 'tenant_zevarone',
+    role: user.role || currentUsers[existingIdx]?.role || 'owner',
+    subscriptionStatus: user.subscriptionStatus || currentUsers[existingIdx]?.subscriptionStatus || 'inactive',
+    subscriptionPlan: user.subscriptionPlan || currentUsers[existingIdx]?.subscriptionPlan || 'Monthly Premium (5,000 LKR)',
+    stripeCustomerId: user.stripeCustomerId || currentUsers[existingIdx]?.stripeCustomerId,
+    stripeSessionId: user.stripeSessionId || currentUsers[existingIdx]?.stripeSessionId,
+    createdAt: currentUsers[existingIdx]?.createdAt || now,
   };
 
+  let updatedUsers: UserAccount[];
   if (existingIdx >= 0) {
-    local.users[existingIdx] = { ...local.users[existingIdx], ...userObj };
+    updatedUsers = [...currentUsers];
+    updatedUsers[existingIdx] = { ...currentUsers[existingIdx], ...userObj };
   } else {
-    local.users.push(userObj);
+    updatedUsers = [...currentUsers, userObj];
   }
 
+  // 1. Save to Supabase Cloud for multi-instance Vercel persistence
+  const supabase = getSupabase();
+  if (supabase) {
+    try {
+      await supabase.from('settings').upsert({
+        id: SUPABASE_USERS_STORE_ID,
+        business_name: 'ZEVARONE_USERS_STORE',
+        automated_template: JSON.stringify(updatedUsers),
+        gemini_system_prompt: 'ZEVARONE_USERS_STORE',
+        gemini_model: 'v1',
+        auto_reply_enabled: true,
+        default_mode: 'ai_chatbot',
+        updated_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('Supabase upsertUser error:', e);
+    }
+  }
+
+  // 2. Save to local store fallback
+  const local = ensureLocalStore();
+  local.users = updatedUsers;
   saveLocalStore(local);
+
   return userObj;
 }
 
@@ -833,22 +886,43 @@ export async function updateUserSubscription(
     subscriptionExpiresAt?: string;
   }
 ): Promise<UserAccount | undefined> {
-  const local = ensureLocalStore();
-  if (!local.users) local.users = [];
-
-  const idx = local.users.findIndex(
+  const currentUsers = await getUsers();
+  const idx = currentUsers.findIndex(
     (u) => u.id === userIdOrEmail || u.email.toLowerCase().trim() === userIdOrEmail.toLowerCase().trim()
   );
 
   if (idx >= 0) {
-    local.users[idx].subscriptionStatus = status;
-    if (stripeData?.customerId) local.users[idx].stripeCustomerId = stripeData.customerId;
-    if (stripeData?.sessionId) local.users[idx].stripeSessionId = stripeData.sessionId;
-    if (stripeData?.plan) local.users[idx].subscriptionPlan = stripeData.plan;
-    if (stripeData?.billingInterval) local.users[idx].billingInterval = stripeData.billingInterval;
-    if (stripeData?.subscriptionExpiresAt) local.users[idx].subscriptionExpiresAt = stripeData.subscriptionExpiresAt;
+    const updatedUsers = [...currentUsers];
+    updatedUsers[idx].subscriptionStatus = status;
+    if (stripeData?.customerId) updatedUsers[idx].stripeCustomerId = stripeData.customerId;
+    if (stripeData?.sessionId) updatedUsers[idx].stripeSessionId = stripeData.sessionId;
+    if (stripeData?.plan) updatedUsers[idx].subscriptionPlan = stripeData.plan;
+    if (stripeData?.billingInterval) updatedUsers[idx].billingInterval = stripeData.billingInterval;
+    if (stripeData?.subscriptionExpiresAt) updatedUsers[idx].subscriptionExpiresAt = stripeData.subscriptionExpiresAt;
+
+    // Save to Supabase
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.from('settings').upsert({
+          id: SUPABASE_USERS_STORE_ID,
+          business_name: 'ZEVARONE_USERS_STORE',
+          automated_template: JSON.stringify(updatedUsers),
+          gemini_system_prompt: 'ZEVARONE_USERS_STORE',
+          gemini_model: 'v1',
+          auto_reply_enabled: true,
+          default_mode: 'ai_chatbot',
+          updated_at: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.error('Supabase updateUserSubscription error:', e);
+      }
+    }
+
+    const local = ensureLocalStore();
+    local.users = updatedUsers;
     saveLocalStore(local);
-    return local.users[idx];
+    return updatedUsers[idx];
   }
   return undefined;
 }

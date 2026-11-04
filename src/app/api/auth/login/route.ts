@@ -49,12 +49,13 @@ export async function POST(req: NextRequest) {
       await upsertUser(user);
     }
 
-    // Verify password against stored hash
+    // Verify password against stored hash (checks both raw and trimmed)
     if (user.passwordHash) {
-      const expectedHash = Buffer.from(password).toString('base64');
-      if (user.passwordHash !== expectedHash) {
+      const hash1 = Buffer.from(password).toString('base64');
+      const hash2 = Buffer.from(password.trim()).toString('base64');
+      if (user.passwordHash !== hash1 && user.passwordHash !== hash2) {
         return NextResponse.json(
-          { success: false, error: 'Invalid password. Please try again.' },
+          { success: false, error: 'Invalid password. Please check your password and try again.' },
           { status: 401 }
         );
       }

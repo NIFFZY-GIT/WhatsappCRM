@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       id: 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       name: name.trim(),
       email: cleanEmail,
-      passwordHash: Buffer.from(password).toString('base64'),
+      passwordHash: Buffer.from(password.trim()).toString('base64'),
       businessName: bName,
       tenantId: tenantId,
       role: isZevarone ? 'superadmin' : 'owner',
