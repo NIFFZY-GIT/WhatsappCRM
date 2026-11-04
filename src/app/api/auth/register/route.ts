@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserByEmail, upsertUser, upsertTenant } from '@/lib/store';
 import { Tenant, UserAccount } from '@/lib/types';
 import { sendWelcomeEmail } from '@/lib/email';
+import { verifyCode } from '@/lib/verification';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, password, businessName, phoneNumber } = body;
+    const { name, email, password, businessName, phoneNumber, code, verificationCode } = body;
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -16,6 +17,24 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+
+    // Verify OTP email code
+    const inputOtp = (verificationCode || code || '').trim();
+    if (!inputOtp) {
+      return NextResponse.json(
+        { success: false, error: 'Please enter the 6-digit verification code sent to your email.' },
+        { status: 400 }
+      );
+    }
+
+    const verif = await verifyCode(cleanEmail, inputOtp);
+    if (!verif.valid) {
+      return NextResponse.json(
+        { success: false, error: verif.reason || 'Invalid or expired verification code.' },
+        { status: 400 }
+      );
+    }
+
     const existing = await getUserByEmail(cleanEmail);
     if (existing) {
       return NextResponse.json(

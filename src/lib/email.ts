@@ -326,3 +326,80 @@ export async function sendHumanSupportAlertEmail({
 
   return sendEmail({ to, subject, html });
 }
+
+
+/**
+ * Template: Email Verification Code (OTP) for Account Registration
+ */
+export async function sendVerificationCodeEmail({
+  to,
+  code,
+  name,
+}: {
+  to: string;
+  code: string;
+  name?: string;
+}) {
+  const subject = `Your ZEVARONE Verification Code: ${code}`;
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${subject}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F0F2F5; margin: 0; padding: 40px 20px; color: #111B21;">
+  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #E9EDEF; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    
+    <!-- Header -->
+    <div style="background-color: #111B21; padding: 32px 36px; border-bottom: 3px solid #00A884; text-align: center;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="center">
+            <div style="display: inline-block; background-color: #008069; color: #ffffff; width: 36px; height: 36px; line-height: 36px; text-align: center; font-weight: bold; font-size: 18px; border-radius: 8px;">W</div>
+            <span style="font-size: 18px; font-weight: bold; color: #ffffff; margin-left: 10px; vertical-align: middle; letter-spacing: -0.5px;">ZEVARONE</span>
+            <span style="font-size: 11px; background: #202C33; color: #25D366; font-weight: bold; padding: 2px 8px; border-radius: 4px; margin-left: 6px; vertical-align: middle;">AI CRM</span>
+          </td>
+        </tr>
+      </table>
+      <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 20px 0 4px 0; letter-spacing: -0.5px;">Verify Your Work Email</h1>
+      <p style="color: #AEBAC1; font-size: 13px; margin: 0;">Confirm your email to activate your WhatsApp AI workspace</p>
+    </div>
+
+    <!-- Body -->
+    <div style="padding: 36px 32px; text-align: center;">
+      <p style="font-size: 15px; line-height: 1.6; color: #111B21; margin: 0 0 16px 0;">
+        ${name ? `Hello <strong>${name}</strong>,` : 'Hello,'}
+      </p>
+      
+      <p style="font-size: 14px; line-height: 1.6; color: #54656F; margin: 0 0 28px 0;">
+        Please enter the verification code below on the signup page to confirm your email and create your business workspace:
+      </p>
+
+      <!-- OTP Code Box -->
+      <div style="background: #F0F2F5; border-radius: 12px; padding: 20px 16px; margin: 0 auto 28px auto; max-width: 340px; border: 1px solid #E9EDEF; letter-spacing: 12px; font-size: 36px; font-weight: 800; color: #008069; font-family: monospace; text-align: center;">
+        ${code}
+      </div>
+
+      <div style="background: #FAFBFB; border-radius: 10px; padding: 14px 18px; margin-bottom: 24px; border: 1px solid #E9EDEF; text-align: left; font-size: 12px; color: #667781; line-height: 1.6;">
+        <div>⏱️ This verification code is valid for <strong>10 minutes</strong>.</div>
+        <div>🔒 For security reasons, never share this code with anyone.</div>
+      </div>
+
+      <p style="font-size: 12px; color: #8696A0; margin: 0;">
+        If you did not initiate this request, you can safely disregard this email.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #FAFBFB; border-top: 1px solid #E9EDEF; padding: 20px 32px; text-align: center; font-size: 12px; color: #8696A0;">
+      <p style="margin: 0 0 4px 0;">© 2026 ZEVARONE Group. All rights reserved.</p>
+      <p style="margin: 0;">POWERED BY ZEVARONE CLOUD INFRASTRUCTURE</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail({ to, subject, html });
+}

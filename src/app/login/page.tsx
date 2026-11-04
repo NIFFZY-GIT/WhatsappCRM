@@ -21,6 +21,8 @@ import {
   Check,
   CheckCheck,
   ArrowLeft,
+  ShieldCheck,
+  RotateCcw,
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -196,11 +198,22 @@ export default function LoginPage() {
   const [loginPassword, setLoginPassword] = useState('');
 
   // Register Form
+  const [regStep, setRegStep] = useState<'form' | 'verify'>('form');
   const [regName, setRegName] = useState('');
   const [regBusinessName, setRegBusinessName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
 
   const strength = useMemo(() => strengthOf(regPassword), [regPassword]);
   const strengthLabel = ['Too short', 'Weak', 'Okay', 'Good', 'Strong'][
@@ -217,6 +230,8 @@ export default function LoginPage() {
 
   const switchMode = (m: 'signin' | 'register') => {
     setMode(m);
+    setRegStep('form');
+    setOtpCode('');
     setErrorMsg('');
     setShowPw(false);
   };
@@ -258,9 +273,59 @@ export default function LoginPage() {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRequestVerification = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setErrorMsg('');
+
+    if (!regName.trim() || !regBusinessName.trim() || !regEmail.trim() || !regPassword.trim()) {
+      return fail('Please enter your name, business name, work email, and password.');
+    }
+
+    if (regPassword.length < 6) {
+      return fail('Password must be at least 6 characters.');
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/send-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: regEmail,
+          name: regName,
+          businessName: regBusinessName,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to dispatch verification email.');
+      }
+
+      setRegStep('verify');
+      setResendCooldown(45);
+      notify({
+        type: 'success',
+        title: 'Verification Code Sent! ✉️',
+        message: `A 6-digit code was sent to ${regEmail}. Please enter it below.`,
+      });
+    } catch (err: any) {
+      fail(err.message || 'Error sending verification code');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyAndRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+
+    const cleanOtp = otpCode.trim();
+    if (!cleanOtp || cleanOtp.length !== 6) {
+      return fail('Please enter the 6-digit verification code.');
+    }
+
     setLoading(true);
 
     try {
@@ -273,19 +338,20 @@ export default function LoginPage() {
           email: regEmail,
           phoneNumber: regPhone,
           password: regPassword,
+          verificationCode: cleanOtp,
         }),
       });
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Registration failed.');
+        throw new Error(data.error || 'Verification or registration failed.');
       }
 
       notify({
         type: 'success',
-        title: 'Account Created Successfully!',
+        title: 'Account Verified & Created! 🎉',
         message:
-          'Your dedicated WhatsApp CRM tenant has been provisioned. Please complete your subscription.',
+          'Your dedicated WhatsApp CRM tenant has been provisioned. Redirecting to billing...',
       });
 
       await refreshData();
@@ -405,11 +471,17 @@ export default function LoginPage() {
           <div className="w-full max-w-[420px] mx-auto">
             <div className="mb-7">
               <h1 className="text-[28px] font-bold tracking-tight">
-                {mode === 'signin' ? 'Welcome back' : 'Create your workspace'}
+                {mode === 'signin'
+                  ? 'Welcome back'
+                  : regStep === 'verify'
+                  ? 'Verify your email'
+                  : 'Create your workspace'}
               </h1>
               <p className="mt-1.5 text-[15px] text-[#54656F]">
                 {mode === 'signin'
                   ? 'Sign in to your inbox, AI replies and product catalog.'
+                  : regStep === 'verify'
+                  ? `Enter the 6-digit code dispatched to ${regEmail}.`
                   : 'Set up your WhatsApp CRM in under a minute.'}
               </p>
             </div>
@@ -493,8 +565,100 @@ export default function LoginPage() {
                   </button>
                 </p>
               </form>
+            ) : regStep === 'verify' ? (
+              <form key="verify" onSubmit={handleVerifyAndRegister} className="form-in space-y-5">
+                <div className="text-center py-2">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-[#E8F5E9] border border-[#25D366]/30 flex items-center justify-center text-[#008069] mb-3 shadow-xs">
+                    <ShieldCheck className="w-7 h-7 text-[#008069]" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#111B21]">Check your email inbox</h3>
+                  <p className="text-xs text-[#54656F] mt-1">
+                    We sent a 6-digit verification code to:
+                  </p>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#F0F2F5] rounded-full text-xs font-semibold text-[#111B21] mt-1.5 border border-[#E9EDEF]">
+                    <Mail className="w-3.5 h-3.5 text-[#008069]" />
+                    <span>{regEmail}</span>
+                  </div>
+                </div>
+
+                {/* 6-digit OTP Input */}
+                <div>
+                  <label htmlFor="otp-input" className="block text-center text-xs font-semibold text-[#54656F] uppercase tracking-wider mb-2">
+                    Enter 6-Digit Code
+                  </label>
+                  <div className="relative max-w-[280px] mx-auto">
+                    <input
+                      id="otp-input"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      autoFocus
+                      value={otpCode}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setOtpCode(val);
+                      }}
+                      placeholder="••••••"
+                      className="w-full h-14 text-center text-2xl font-mono font-black tracking-[0.45em] bg-[#F7F8FA] border-2 border-[#E1E6EA] rounded-xl text-[#111B21] placeholder:text-[#CBD2D7] outline-none transition-all focus:bg-white focus:border-[#008069] focus:ring-4 focus:ring-[#008069]/10"
+                    />
+                  </div>
+                  <p className="text-center text-[11px] text-[#8696A0] mt-2">
+                    Code expires in 10 minutes. Check your spam/junk folder if not received.
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-3 pt-1">
+                  <button
+                    type="submit"
+                    disabled={loading || otpCode.length !== 6}
+                    className="group relative w-full h-12 overflow-hidden rounded-xl bg-[#008069] text-white text-[15px] font-semibold shadow-lg shadow-[#008069]/25 transition-all hover:bg-[#006F5B] hover:shadow-xl hover:shadow-[#008069]/30 active:scale-[0.985] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    <span className="shine" aria-hidden />
+                    <span className="relative flex items-center justify-center gap-2">
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Verifying Code…
+                        </>
+                      ) : (
+                        <>
+                          <span>Verify &amp; Create Workspace</span>
+                          <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-1" />
+                        </>
+                      )}
+                    </span>
+                  </button>
+
+                  <div className="flex items-center justify-between text-xs pt-1 px-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegStep('form');
+                        setErrorMsg('');
+                      }}
+                      className="text-[#54656F] hover:text-[#111B21] font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      Edit Details
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={loading || resendCooldown > 0}
+                      onClick={() => handleRequestVerification()}
+                      className="text-[#008069] hover:underline font-semibold disabled:text-[#8696A0] disabled:no-underline transition flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                      {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend Code'}
+                    </button>
+                  </div>
+                </div>
+              </form>
             ) : (
-              <form key="register" onSubmit={handleRegister} className="form-in space-y-4">
+              <form key="register" onSubmit={handleRequestVerification} className="form-in space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field
                     id="reg-name"
@@ -603,13 +767,13 @@ export default function LoginPage() {
                   </ul>
                 </div>
 
-                {submitBtn('Create account and continue')}
+                {submitBtn('Send Verification Code & Continue')}
                 <p className="text-center text-sm text-[#54656F] pt-1">
                   Already have an account?{' '}
                   <button
                     type="button"
                     onClick={() => switchMode('signin')}
-                    className="font-semibold text-[#008069] hover:underline"
+                    className="font-semibold text-[#008069] hover:underline cursor-pointer"
                   >
                     Sign in
                   </button>
