@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import { useApp } from '@/context/AppContext';
 import {
@@ -20,10 +20,11 @@ import {
 } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const {
     selectedTenant,
     databaseStatus,
@@ -34,9 +35,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     hasNotificationPermission,
     requestNotificationPermission,
     currentUser,
+    isLoading,
   } = useApp();
 
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
+
+  // Production Auth Route Guard: Redirect unauthenticated users to /login
+  useEffect(() => {
+    const publicRoutes = ['/', '/login', '/privacy', '/terms'];
+    if (!isLoading && !currentUser && !publicRoutes.includes(pathname)) {
+      router.push('/login');
+    }
+  }, [isLoading, currentUser, pathname, router]);
 
   // Landing page and Auth page render with full width, custom header & footer
   if (pathname === '/' || pathname === '/login') {

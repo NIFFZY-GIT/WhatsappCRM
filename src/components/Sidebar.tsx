@@ -74,24 +74,28 @@ export default function Sidebar() {
       badge: isProUser ? 'Pro' : 'Pay',
       badgeColor: isProUser ? 'bg-[#00A884] text-white' : 'bg-amber-400 text-[#111B21]',
     },
-    {
-      label: 'Admin Client Monitor',
-      href: '/admin',
-      icon: ShieldCheck,
-      badge: 'Master',
-      badgeColor: 'bg-emerald-400 text-slate-950 font-bold',
-    },
+    ...(isZevaroneAdmin(currentUser)
+      ? [
+          {
+            label: 'Admin Client Monitor',
+            href: '/admin',
+            icon: ShieldCheck,
+            badge: 'Master',
+            badgeColor: 'bg-emerald-400 text-slate-950 font-bold',
+          },
+          {
+            label: 'Offline Simulator',
+            href: '/simulator',
+            icon: Terminal,
+          },
+        ]
+      : []),
     {
       label: 'Client Businesses',
       href: '/tenants',
       icon: Building2,
       badge: `${tenants.length}`,
       badgeColor: 'bg-[#202C33] text-[#8696A0] border border-[#2A3942]',
-    },
-    {
-      label: 'Offline Simulator',
-      href: '/simulator',
-      icon: Terminal,
     },
     {
       label: 'Webhook & API Setup',

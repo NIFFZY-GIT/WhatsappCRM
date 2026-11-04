@@ -114,39 +114,32 @@ export default function LoginPage() {
     }
   };
 
-  const fillDemoAdmin = () => {
-    setMode('signin');
-    setLoginEmail('admin@zevarone.com');
-    setLoginPassword('password123');
-  };
-
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex flex-col justify-between text-[#111B21]">
       {/* Top Header */}
       <header className="border-b border-[#E9EDEF] bg-white px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-[#008069] flex items-center justify-center text-white font-bold text-lg shadow-sm">
             W
           </div>
           <div>
             <h1 className="text-base font-bold text-[#111B21] flex items-center gap-2">
-              WhatsApp CRM & Gemini AI Hub
+              WhatsApp CRM &amp; Gemini AI Hub
               <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E8F5E9] text-[#008069]">
-                Multi-Tenant SaaS
+                Enterprise
               </span>
             </h1>
-            <p className="text-xs text-[#54656F]">Enterprise Customer Communication Platform</p>
+            <p className="text-xs text-[#54656F]">Official Meta Cloud API Platform</p>
           </div>
-        </div>
+        </Link>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={fillDemoAdmin}
-            className="text-xs px-3 py-1.5 rounded-lg border border-[#008069] text-[#008069] hover:bg-[#E8F5E9] transition font-medium"
+          <Link
+            href="/"
+            className="text-xs px-3.5 py-1.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition font-medium"
           >
-            Fill Demo Admin Credentials
-          </button>
+            &larr; Back to Home
+          </Link>
         </div>
       </header>
 
@@ -224,7 +217,7 @@ export default function LoginPage() {
                       required
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
-                      placeholder="admin@zevarone.com"
+                      placeholder="you@company.com"
                       className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-[#E9EDEF] rounded-lg text-[#111B21] focus:outline-none focus:border-[#008069]"
                     />
                   </div>
@@ -233,9 +226,6 @@ export default function LoginPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-xs font-medium text-[#54656F]">Password</label>
-                    <span className="text-[11px] text-[#008069] hover:underline cursor-pointer">
-                      Demo password: password123
-                    </span>
                   </div>
                   <div className="relative">
                     <Lock className="w-4 h-4 text-[#8696A0] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -372,13 +362,13 @@ export default function LoginPage() {
               </form>
             )}
 
-            {/* Quick Demo Preview Link */}
+            {/* Navigation back to landing page */}
             <div className="mt-6 pt-4 border-t border-[#E9EDEF] text-center">
               <Link
-                href="/inbox"
+                href="/"
                 className="text-xs text-[#54656F] hover:text-[#008069] transition font-medium"
               >
-                ← Continue to Demo Shared Inbox as Guest
+                ← Back to ZEVARONE Home &amp; Pricing
               </Link>
             </div>
           </div>

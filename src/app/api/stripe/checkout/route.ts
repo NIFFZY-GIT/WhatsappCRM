@@ -17,14 +17,11 @@ export async function POST(req: NextRequest) {
     const stripe = getStripe();
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin || 'https://whatsapp-crm-orpin.vercel.app').replace(/\/$/, '');
 
-    // If STRIPE_SECRET_KEY is not configured yet (mock/demo mode)
     if (!stripe) {
-      return NextResponse.json({
-        success: true,
-        isDemo: true,
-        message: 'Stripe API key is not configured in .env yet. Use mock checkout to preview.',
-        demoSuccessUrl: `${appUrl}/billing?success=true&demo=true&interval=${billingInterval}&tenantId=${tenantId || 'tenant_zevarone'}`,
-      });
+      return NextResponse.json(
+        { success: false, error: 'Stripe gateway is not configured. STRIPE_SECRET_KEY is missing.' },
+        { status: 500 }
+      );
     }
 
     const session = await createStripeCheckoutSession({

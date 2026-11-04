@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       const result = await sendWelcomeEmail({
         to,
         name,
-        businessName: 'Zevarone Demo Business',
+        businessName: 'Zevarone Enterprise',
       });
       return NextResponse.json(result);
     }

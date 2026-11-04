@@ -39,18 +39,16 @@ function BillingContent() {
   // Handle return from Stripe checkout
   useEffect(() => {
     const isSuccess = searchParams.get('success') === 'true';
-    const isDemo = searchParams.get('demo') === 'true';
     const sessionId = searchParams.get('session_id');
     const intervalParam = (searchParams.get('interval') as 'monthly' | 'annual') || 'monthly';
 
-    if (isSuccess) {
+    if (isSuccess && sessionId) {
       setVerifying(true);
       fetch('/api/stripe/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          isDemo,
           interval: intervalParam,
           email: currentUser?.email,
           userId: currentUser?.id,
@@ -70,6 +68,12 @@ function BillingContent() {
               message: `Full access to your WhatsApp CRM and Gemini AI concierge has been unlocked.`,
             });
             await refreshData();
+          } else {
+            notify({
+              type: 'error',
+              title: 'Verification Incomplete',
+              message: data.message || 'Payment could not be verified by Stripe.',
+            });
           }
         })
         .catch((err) => {
@@ -81,47 +85,29 @@ function BillingContent() {
     }
   }, [searchParams, currentUser]);
 
-  const handlePayWithStripe = async (forceDemo: boolean = false) => {
+  const handlePayWithStripe = async () => {
+    if (!currentUser) {
+      notify({
+        type: 'warning',
+        title: 'Sign In Required',
+        message: 'Please sign in or register your business account before subscribing.',
+      });
+      router.push('/login');
+      return;
+    }
+
     setLoading(true);
     try {
-      const email = currentUser?.email || 'admin@zevarone.com';
-      const tenantId = selectedTenant?.id || currentUser?.tenantId || 'tenant_zevarone';
-      const name = currentUser?.name || 'Business Owner';
-
-      if (forceDemo) {
-        // Direct test activation
-        const res = await fetch('/api/stripe/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            isDemo: true,
-            email,
-            interval: billingInterval,
-            userId: currentUser?.id,
-          }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          setSuccessBanner(true);
-          setStatusMessage(
-            `Test activation successful! ${billingInterval === 'annual' ? 'Annual (4,500 LKR/mo)' : 'Monthly (5,000 LKR/mo)'} Pro tier unlocked.`
-          );
-          notify({
-            type: 'success',
-            title: 'Pro Unlocked (Test Mode)',
-            message: 'Your account now has full access to all WhatsApp CRM features.',
-          });
-          await refreshData();
-        }
-        return;
-      }
+      const email = currentUser.email;
+      const tenantId = selectedTenant?.id || currentUser.tenantId;
+      const name = currentUser.name || 'Business Partner';
 
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userEmail: email,
-          userId: currentUser?.id,
+          userId: currentUser.id,
           tenantId: tenantId,
           customerName: name,
           billingInterval,
@@ -135,14 +121,14 @@ function BillingContent() {
 
       if (data.url) {
         window.location.href = data.url;
-      } else if (data.isDemo && data.demoSuccessUrl) {
-        window.location.href = data.demoSuccessUrl;
+      } else {
+        throw new Error('No checkout URL received from Stripe.');
       }
     } catch (err: any) {
       notify({
         type: 'error',
         title: 'Checkout Error',
-        message: err.message || 'Could not initiate Stripe payment.',
+        message: err.message || 'Could not initiate Stripe payment gateway.',
       });
     } finally {
       setLoading(false);
@@ -369,9 +355,9 @@ function BillingContent() {
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
-                  onClick={() => handlePayWithStripe(false)}
+                  onClick={handlePayWithStripe}
                   disabled={loading}
-                  className="flex-1 sm:flex-none px-5 py-2.5 bg-[#008069] hover:bg-[#075E54] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-3 bg-[#008069] hover:bg-[#075E54] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
                 >
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -381,18 +367,6 @@ function BillingContent() {
                       {isAnnual ? 'Pay 54,000 LKR (Annual - Save 10%)' : 'Pay 5,000 LKR (Monthly)'}
                     </>
                   )}
-                </button>
-
-                {/* Instant Test Mode Activation */}
-                <button
-                  type="button"
-                  onClick={() => handlePayWithStripe(true)}
-                  disabled={loading}
-                  title="Simulate instant payment for test/demo environments"
-                  className="px-3.5 py-2.5 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 text-xs font-semibold rounded-xl transition flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#008069]" />
-                  Simulate {isAnnual ? 'Annual' : 'Monthly'}
                 </button>
               </div>
             </div>
@@ -437,7 +411,7 @@ function BillingContent() {
             </h3>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
               <div className="font-bold text-xs text-slate-900">
-                {selectedTenant?.name || 'Zevarone Demo Business'}
+                {selectedTenant?.name || 'Your Business Workspace'}
               </div>
               <div className="text-[11px] text-slate-500 mt-0.5">
                 ID: {selectedTenant?.id || 'tenant_zevarone'}

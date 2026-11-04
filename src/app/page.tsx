@@ -136,7 +136,7 @@ export default function LandingPage() {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3.5">
             <Link
               href="/login"
-              className="w-full sm:w-auto px-7 py-3.5 bg-[#008069] hover:bg-[#075E54] text-white text-sm font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md active:scale-[0.99]"
+              className="w-full sm:w-auto px-8 py-3.5 bg-[#008069] hover:bg-[#075E54] text-white text-sm font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm hover:shadow-md active:scale-[0.99]"
             >
               Get Started Now
               <ArrowRight className="w-4 h-4" />
@@ -144,17 +144,10 @@ export default function LandingPage() {
 
             <Link
               href="/login"
-              className="w-full sm:w-auto px-6 py-3.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-sm font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-xs"
+              className="w-full sm:w-auto px-7 py-3.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-sm font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-xs"
             >
               <LogIn className="w-4 h-4 text-slate-500" />
               Login to Workspace
-            </Link>
-
-            <Link
-              href="/inbox"
-              className="w-full sm:w-auto px-4 py-3.5 text-xs font-semibold text-slate-500 hover:text-[#008069] flex items-center justify-center gap-1 transition"
-            >
-              Preview Live Shared Inbox &rarr;
             </Link>
           </div>
 
