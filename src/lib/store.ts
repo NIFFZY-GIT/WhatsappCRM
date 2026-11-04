@@ -169,18 +169,79 @@ export function parseTenantRow(t: any): Tenant {
 
 export async function getTenants(): Promise<Tenant[]> {
   const supabase = getSupabase();
+  let tenantList: Tenant[] = [];
+
   if (supabase) {
     try {
       const { data, error } = await supabase.from('tenants').select('*').order('created_at', { ascending: true });
       if (!error && data && data.length > 0) {
-        return data.map(parseTenantRow);
+        tenantList = data.map(parseTenantRow);
       }
     } catch (e) {
       console.warn('Supabase getTenants error, using local fallback:', e);
     }
   }
-  const local = ensureLocalStore();
-  return local.tenants.map(parseTenantRow);
+
+  if (tenantList.length === 0) {
+    const local = ensureLocalStore();
+    tenantList = local.tenants.map(parseTenantRow);
+  }
+
+  // Auto-sync: Guarantee that every registered user's business tenant is included
+  try {
+    const users = await getUsers();
+    const existingIds = new Set(tenantList.map((t) => t.id));
+
+    for (const u of users) {
+      if (u.tenantId && !existingIds.has(u.tenantId)) {
+        const bName = u.businessName || `${u.name}'s Business`;
+        const slug =
+          bName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') ||
+          `tenant-${Date.now()}`;
+
+        const autoTenant: Tenant = {
+          id: u.tenantId,
+          name: bName,
+          slug,
+          whatsappNumber: '',
+          phoneNumberId: '',
+          whatsappToken: '',
+          geminiApiKey: '',
+          geminiSystemPrompt: `You are the AI Sales & Support Concierge for ${bName}. Be professional, warm, and helpful.`,
+          defaultMode: 'ai_chatbot',
+          automatedTemplate: `Hello {{name}}! Welcome to ${bName}. How can we assist you today?`,
+          welcomeMedia: [],
+          sendWelcomeMedia: false,
+          createdAt: u.createdAt || new Date().toISOString(),
+          isActive: true,
+        };
+
+        tenantList.push(autoTenant);
+        existingIds.add(u.tenantId);
+
+        // Persist missing tenant to Supabase so it permanently exists
+        if (supabase) {
+          Promise.resolve(
+            supabase.from('tenants').upsert({
+              id: autoTenant.id,
+              name: autoTenant.name,
+              slug: autoTenant.slug,
+              whatsapp_number: autoTenant.whatsappNumber,
+              phone_number_id: autoTenant.phoneNumberId,
+              gemini_system_prompt: autoTenant.geminiSystemPrompt,
+              automated_template: autoTenant.automatedTemplate,
+              default_mode: autoTenant.defaultMode,
+              is_active: autoTenant.isActive,
+            })
+          ).catch(() => {});
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Error syncing users to tenants:', err);
+  }
+
+  return tenantList;
 }
 
 export async function getTenant(idOrSlug: string): Promise<Tenant | undefined> {
@@ -232,10 +293,24 @@ export async function upsertTenant(tenantData: Partial<Tenant> & { name: string 
         is_active: tenantData.isActive ?? true,
       };
 
-      await supabase.from('tenants').upsert(row);
+      const { error: upsertErr } = await supabase.from('tenants').upsert(row);
+      if (upsertErr) {
+        console.error('Supabase upsertTenant error:', upsertErr);
+      }
     } catch (e) {
-      console.error('Supabase upsertTenant error:', e);
+      console.error('Supabase upsertTenant exception:', e);
     }
+  }
+
+  // Also update user's businessName if owner is registered with this tenantId
+  try {
+    const users = await getUsers();
+    const owner = users.find((u) => u.tenantId === id);
+    if (owner && owner.businessName !== tenantData.name) {
+      await upsertUser({ ...owner, businessName: tenantData.name });
+    }
+  } catch (err) {
+    console.warn('Failed to sync businessName to user account:', err);
   }
 
   // Update local file store as sync fallback

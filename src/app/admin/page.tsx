@@ -29,6 +29,7 @@ import {
   Lock,
   ArrowRight,
   Loader2,
+  Pencil,
 } from 'lucide-react';
 
 interface WorkspaceData {
@@ -79,6 +80,83 @@ export default function AdminMonitorPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // Edit Company Modal State
+  const [editingWorkspace, setEditingWorkspace] = useState<WorkspaceData | null>(null);
+  const [editCompanyName, setEditCompanyName] = useState('');
+  const [editCompanyPhone, setEditCompanyPhone] = useState('');
+  const [editCompanyPhoneId, setEditCompanyPhoneId] = useState('');
+  const [editOwnerName, setEditOwnerName] = useState('');
+  const [editOwnerEmail, setEditOwnerEmail] = useState('');
+  const [editSubStatus, setEditSubStatus] = useState<'active' | 'inactive' | 'trial'>('active');
+  const [editSubPlan, setEditSubPlan] = useState('');
+  const [editBotMode, setEditBotMode] = useState<string>('ai_chatbot');
+  const [editAiPrompt, setEditAiPrompt] = useState('');
+  const [isSavingCompany, setIsSavingCompany] = useState(false);
+
+  const handleOpenEditModal = (w: WorkspaceData) => {
+    setEditingWorkspace(w);
+    setEditCompanyName(w.tenant.name || '');
+    setEditCompanyPhone(w.tenant.whatsappNumber || '');
+    setEditCompanyPhoneId((w.tenant as any).phoneNumberId || '');
+    setEditOwnerName(w.owner?.name || '');
+    setEditOwnerEmail(w.owner?.email || '');
+    setEditSubStatus(w.owner?.subscriptionStatus || 'inactive');
+    setEditSubPlan(w.owner?.subscriptionPlan || 'WhatsApp CRM & Zevarone AI Pro (5,000 LKR/mo)');
+    setEditBotMode(w.tenant.defaultMode || 'ai_chatbot');
+    setEditAiPrompt((w.tenant as any).geminiSystemPrompt || '');
+  };
+
+  const handleSaveCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingWorkspace || !editCompanyName.trim()) return;
+
+    setIsSavingCompany(true);
+    try {
+      const res = await fetch('/api/admin/edit-company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: editingWorkspace.tenant.id,
+          name: editCompanyName.trim(),
+          whatsappNumber: editCompanyPhone.trim(),
+          phoneNumberId: editCompanyPhoneId.trim(),
+          defaultMode: editBotMode,
+          geminiSystemPrompt: editAiPrompt.trim() || undefined,
+          ownerName: editOwnerName.trim() || undefined,
+          ownerEmail: editOwnerEmail.trim() || undefined,
+          subscriptionStatus: editSubStatus,
+          subscriptionPlan: editSubPlan.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setEditingWorkspace(null);
+        await fetchAdminData();
+        await refreshData();
+        notify({
+          type: 'success',
+          title: 'Company Updated',
+          message: `${editCompanyName} details have been saved successfully!`,
+        });
+      } else {
+        notify({
+          type: 'error',
+          title: 'Update Failed',
+          message: data.error || 'Failed to update company.',
+        });
+      }
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error Saving Company',
+        message: err.message || 'Network error.',
+      });
+    } finally {
+      setIsSavingCompany(false);
+    }
+  };
 
   const fetchAdminData = async () => {
     setLoading(true);
@@ -450,11 +528,22 @@ export default function AdminMonitorPage() {
                       {/* Admin Actions */}
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {/* Edit Company Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditModal(item)}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#008069] border border-emerald-200 font-semibold text-[11px] flex items-center gap-1 transition cursor-pointer"
+                            title="Edit Company Details & Settings"
+                          >
+                            <Pencil className="w-3 h-3 text-[#008069]" />
+                            Edit
+                          </button>
+
                           {/* Inspect Client Inbox */}
                           <button
                             type="button"
                             onClick={() => handleInspectWorkspace(item)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] flex items-center gap-1 transition"
+                            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] flex items-center gap-1 transition cursor-pointer"
                             title="Open client's live inbox to monitor conversations"
                           >
                             <Eye className="w-3.5 h-3.5 text-[#008069]" />
@@ -471,7 +560,7 @@ export default function AdminMonitorPage() {
                                 item.owner?.subscriptionStatus || 'inactive'
                               )
                             }
-                            className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition ${
+                            className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition cursor-pointer ${
                               isActive
                                 ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                                 : 'bg-[#008069] text-white hover:bg-[#075E54]'
@@ -496,6 +585,168 @@ export default function AdminMonitorPage() {
           </table>
         </div>
       </div>
+
+      {/* MASTER ADMIN: EDIT COMPANY DETAILS MODAL */}
+      {editingWorkspace && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-xl w-full p-6 animate-in fade-in zoom-in-95 my-8 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-4">
+              <div>
+                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                  <Pencil className="w-5 h-5 text-[#008069]" />
+                  Edit Client Company &amp; Account
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Tenant ID: <span className="font-mono text-slate-700 font-semibold">{editingWorkspace.tenant.id}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setEditingWorkspace(null)}
+                className="text-slate-400 hover:text-slate-700 text-xl font-bold cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCompany} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Company / Business Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editCompanyName}
+                    onChange={(e) => setEditCompanyName(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-[#008069] focus:outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    WhatsApp Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 94772284950"
+                    value={editCompanyPhone}
+                    onChange={(e) => setEditCompanyPhone(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-[#008069] focus:outline-none transition"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Owner Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editOwnerName}
+                    onChange={(e) => setEditOwnerName(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-[#008069] focus:outline-none transition"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Owner Login Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editOwnerEmail}
+                    onChange={(e) => setEditOwnerEmail(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-[#008069] focus:outline-none transition"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Subscription Status
+                  </label>
+                  <select
+                    value={editSubStatus}
+                    onChange={(e) => setEditSubStatus(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-[#008069] focus:outline-none transition"
+                  >
+                    <option value="active">Active Pro (Access Granted)</option>
+                    <option value="inactive">Inactive (Subscription Required)</option>
+                    <option value="trial">Free Trial</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Response Engine
+                  </label>
+                  <select
+                    value={editBotMode}
+                    onChange={(e) => setEditBotMode(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-[#008069] focus:outline-none transition"
+                  >
+                    <option value="ai_chatbot">Option 2: Zevarone AI Sales Concierge</option>
+                    <option value="automated">Option 1: Automated Template</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                  Meta Phone Number ID (Cloud API)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 1409984342191428"
+                  value={editCompanyPhoneId}
+                  onChange={(e) => setEditCompanyPhoneId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:bg-white focus:border-[#008069] focus:outline-none transition"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                  Zevarone AI Persona &amp; Operating Instructions
+                </label>
+                <textarea
+                  rows={3}
+                  value={editAiPrompt}
+                  onChange={(e) => setEditAiPrompt(e.target.value)}
+                  placeholder="Instructions for Zevarone AI when responding to this client's WhatsApp customers..."
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-[#008069] focus:outline-none transition"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setEditingWorkspace(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingCompany}
+                  className="px-5 py-2 bg-[#00A884] hover:bg-[#075E54] disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                >
+                  {isSavingCompany ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Saving Changes...
+                    </>
+                  ) : (
+                    'Save Company Details'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
