@@ -283,7 +283,7 @@ export default function AdminMonitorPage() {
         {/* KPI 4 */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-1">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">Gemini AI Volume</span>
+            <span className="text-xs font-semibold uppercase tracking-wider">Zevarone AI Volume</span>
             <Bot className="w-4 h-4 text-purple-600" />
           </div>
           <div className="text-2xl font-black text-slate-900">

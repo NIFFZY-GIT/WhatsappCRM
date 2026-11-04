@@ -154,7 +154,7 @@ export default function Sidebar() {
                   AI CRM
                 </span>
               </div>
-              <p className="text-[11px] text-[#8696A0]">WhatsApp Cloud &amp; Gemini</p>
+              <p className="text-[11px] text-[#8696A0]">WhatsApp Cloud &amp; Zevarone AI</p>
             </div>
           </div>
 
@@ -364,7 +364,7 @@ export default function Sidebar() {
               AI Engine
             </span>
             <span className="font-semibold text-[#E9EDEF] text-[10px] bg-[#202C33] px-2 py-0.5 rounded border border-[#2A3942]">
-              Gemini Flash ⚡
+              Zevarone AI Neural ⚡
             </span>
           </div>
         </div>

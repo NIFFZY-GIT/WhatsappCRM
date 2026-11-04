@@ -223,7 +223,7 @@ export default function InboxPage() {
         notify({
           type: 'info',
           title: 'Bot Engine Switched',
-          message: `${selectedContact.name} is now using ${mode === 'ai_chatbot' ? 'Gemini AI Chatbot' : 'Automated Template'}.`,
+          message: `${selectedContact.name} is now using ${mode === 'ai_chatbot' ? 'Zevarone AI Sales Agent' : 'Automated Template'}.`,
         });
       } else {
         notify({
@@ -580,7 +580,7 @@ export default function InboxPage() {
             </span>
           </div>
           <p className="text-xs text-[#667781] mt-0.5">
-            Real-time customer conversations, automated Gemini AI responses, and instant human takeover without page reload.
+            Real-time customer conversations, automated Zevarone AI responses, and instant human takeover without page reload.
           </p>
         </div>
 
@@ -706,7 +706,7 @@ export default function InboxPage() {
                               : 'bg-[#EFEAE2] text-[#075E54]'
                           }`}
                         >
-                          {c.mode === 'ai_chatbot' ? '🤖 Gemini AI' : '⚡ Auto-Reply'}
+                          {c.mode === 'ai_chatbot' ? '🤖 Zevarone AI' : '⚡ Auto-Reply'}
                         </span>
                         {c.needsHumanAssistance && (
                           <span className="bg-rose-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold flex items-center gap-0.5 animate-pulse">
@@ -768,7 +768,7 @@ export default function InboxPage() {
                   {selectedContact.mode === 'ai_chatbot' ? (
                     <>
                       <Sparkles className="w-3.5 h-3.5 text-[#00A884]" />
-                      <span>Gemini AI</span>
+                      <span>Zevarone AI</span>
                     </>
                   ) : (
                     <>
@@ -841,7 +841,7 @@ export default function InboxPage() {
                           ) : m.sender === 'bot' ? (
                             <span className="flex items-center gap-1 font-bold">
                               <Sparkles className="w-3 h-3 text-[#00A884]" />
-                              {m.mode === 'ai_chatbot' ? 'Gemini AI Assistant' : 'Automated Sequence'}
+                              {m.mode === 'ai_chatbot' ? 'Zevarone AI Assistant' : 'Automated Sequence'}
                             </span>
                           ) : (
                             <span className="font-bold">Agent Reply</span>

@@ -92,7 +92,7 @@ export default function CataloguePage() {
         notify({
           type: 'success',
           title: 'Product Added to Catalogue',
-          message: `${addedName} is now live and readable by Gemini AI.`,
+          message: `${addedName} is now live and readable by Zevarone AI.`,
         });
       } else {
         notify({
@@ -208,7 +208,7 @@ export default function CataloguePage() {
             Product &amp; Service Catalogue ({selectedTenant?.name})
           </h2>
           <p className="text-xs text-[#667781] mt-1">
-            Gemini AI references this live database to quote exact prices, specifications, and availability.
+            Zevarone AI references this live database to quote exact prices, specifications, and availability.
           </p>
         </div>
 
@@ -234,7 +234,7 @@ export default function CataloguePage() {
       <div className="p-4 rounded-xl bg-[#D9FDD3]/50 border border-[#25D366]/40 text-xs text-[#075E54] flex items-start gap-3">
         <Sparkles className="w-5 h-5 text-[#00A884] flex-shrink-0 mt-0.5" />
         <div className="leading-relaxed">
-          <strong>Instant AI Sync:</strong> Whenever a WhatsApp customer asks about items or pricing, Gemini AI scans this table and replies immediately with accurate numbers, colors, specs, and in-stock statuses!
+          <strong>Instant AI Sync:</strong> Whenever a WhatsApp customer asks about items or pricing, Zevarone AI scans this table and replies immediately with accurate numbers, colors, specs, and in-stock statuses!
         </div>
       </div>
 
@@ -248,7 +248,7 @@ export default function CataloguePage() {
           <Package className="w-12 h-12 text-[#667781]/40 mx-auto mb-3" />
           <h4 className="font-bold text-[#111B21] text-sm">No products in catalogue yet</h4>
           <p className="text-xs text-[#667781] mt-1 mb-4">
-            Add items so your Gemini AI bot can answer pricing inquiries for {selectedTenant?.name}.
+            Add items so your Zevarone AI bot can answer pricing inquiries for {selectedTenant?.name}.
           </p>
           <button
             onClick={() => setShowAddModal(true)}

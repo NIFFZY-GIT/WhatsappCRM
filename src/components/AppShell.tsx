@@ -75,7 +75,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   {selectedTenant?.name || 'Zevarone Group'}
                 </span>
                 <span className="text-[10px] bg-[#EFEAE2] text-[#075E54] font-semibold px-2 py-0.5 rounded-full border border-[#E9EDEF]">
-                  {selectedTenant?.defaultMode === 'ai_chatbot' ? '🤖 Gemini AI Active' : '⚡ Auto-Reply Active'}
+                  {selectedTenant?.defaultMode === 'ai_chatbot' ? '🤖 Zevarone AI Active' : '⚡ Auto-Reply Active'}
                 </span>
               </div>
               <p className="text-[11px] text-[#667781] flex items-center gap-1">
@@ -194,7 +194,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
               <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#D9FDD3] text-[#075E54] font-semibold border border-[#25D366]/40">
                 <Sparkles className="w-3 h-3 text-[#075E54]" />
-                Gemini Flash AI
+                Zevarone AI Neural Core
               </span>
             </div>
           </div>

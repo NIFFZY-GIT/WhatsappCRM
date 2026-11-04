@@ -588,7 +588,7 @@ function BillingContent() {
                   ZEVARONE ENTERPRISE TIER
                 </span>
                 <h2 className="text-xl font-bold text-slate-900 mt-2">
-                  WhatsApp CRM &amp; Gemini AI Pro
+                  WhatsApp CRM &amp; Zevarone AI Pro
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
                   Complete omnichannel customer engagement platform for businesses in Sri Lanka &amp; worldwide.
@@ -622,7 +622,7 @@ function BillingContent() {
                   },
                   {
                     icon: Bot,
-                    title: 'Gemini 2.5 AI Sales Agent',
+                    title: 'Zevarone Neural AI Sales Agent',
                     desc: 'Autonomous intelligent customer responses with customized system prompts.',
                   },
                   {

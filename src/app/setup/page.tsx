@@ -48,7 +48,7 @@ export default function SetupPage() {
         notify({
           type: 'success',
           title: 'Diagnostics Passed',
-          message: 'WhatsApp Cloud API, Supabase, and Gemini are fully connected!',
+          message: 'WhatsApp Cloud API, Supabase, and Zevarone AI Engine are fully connected!',
         });
       } else {
         notify({
@@ -253,7 +253,7 @@ export default function SetupPage() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <h4 className="font-bold text-[#111B21] text-sm">System Connection Diagnostics</h4>
-              <p className="text-xs text-[#667781]">Test live connectivity to Meta Graph API, Supabase, and Gemini AI.</p>
+              <p className="text-xs text-[#667781]">Test live connectivity to Meta Graph API, Supabase, and Zevarone AI Engine.</p>
             </div>
 
             <button
@@ -271,7 +271,7 @@ export default function SetupPage() {
               <div className="text-[#25D366] font-bold">--- DIAGNOSTIC RESULTS ---</div>
               <div>WhatsApp API Status: {testResults.whatsapp?.status || 'OK'}</div>
               <div>Database: {testResults.database?.type || 'Supabase'} (Connected: {String(testResults.database?.connected)})</div>
-              <div>Gemini AI Status: {testResults.gemini?.status || 'Active'}</div>
+              <div>Zevarone AI Status: {testResults.gemini?.status || 'Active'}</div>
               <div>Time: {new Date().toISOString()}</div>
             </div>
           )}

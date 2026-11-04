@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       subscriptionStatus: isZevarone ? 'active' : 'inactive', // Zevarone team is pre-active
       subscriptionPlan: isZevarone
         ? 'Zevarone Master Superadmin'
-        : 'WhatsApp CRM & Gemini AI Pro (5,000 LKR/mo)',
+        : 'WhatsApp CRM & Zevarone AI Pro (5,000 LKR/mo)',
       createdAt: new Date().toISOString(),
     };
 

@@ -112,7 +112,7 @@ export async function sendWelcomeEmail({
       <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">Hello <strong>${name}</strong>,</p>
       
       <p style="font-size: 14px; line-height: 1.6; color: #54656F; margin: 0 0 24px 0;">
-        Thank you for joining <strong>ZEVARONE WhatsApp Business CRM</strong>. Your dedicated business tenant has been created. You can now connect your Meta WhatsApp phone number, configure your 24/7 Google Gemini AI sales concierge, and start converting leads into orders.
+        Thank you for joining <strong>ZEVARONE WhatsApp Business CRM</strong>. Your dedicated business tenant has been created. You can now connect your Meta WhatsApp phone number, configure your 24/7 Zevarone AI sales concierge, and start converting leads into orders.
       </p>
 
       <!-- Account Summary Card -->
@@ -129,7 +129,7 @@ export async function sendWelcomeEmail({
           </tr>
           <tr>
             <td style="color: #54656F;">Platform Engine:</td>
-            <td>Google Gemini 2.5 Flash + Meta Cloud API</td>
+            <td>Zevarone Neural Core v2.5 + Meta Cloud API</td>
           </tr>
           <tr>
             <td style="color: #54656F;">Next Step:</td>
@@ -150,7 +150,7 @@ export async function sendWelcomeEmail({
         <p style="font-size: 12px; font-weight: bold; text-transform: uppercase; color: #54656F; margin: 0 0 12px 0;">What you can do right now:</p>
         <ul style="font-size: 13px; color: #54656F; padding-left: 20px; line-height: 1.8; margin: 0;">
           <li>Upload your custom lookbook images for <strong>Welcome Media Sequences</strong></li>
-          <li>Set up your custom <strong>Gemini AI Prompts</strong> and catalog prices</li>
+          <li>Set up your custom <strong>Zevarone AI Prompts</strong> and catalog prices</li>
           <li>Manage team members inside the <strong>Shared Real-Time Inbox</strong></li>
           <li>Send mass promotional announcements via <strong>Broadcast Messenger</strong></li>
         </ul>
@@ -183,7 +183,7 @@ export async function sendPaymentReceiptEmail({
   businessName,
   amountLkr = 5000,
   interval = 'monthly',
-  planName = 'WhatsApp CRM & Gemini AI Pro',
+  planName = 'WhatsApp CRM & Zevarone AI Pro',
   sessionId,
 }: {
   to: string;

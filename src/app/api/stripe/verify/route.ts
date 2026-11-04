@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
       const detectedInterval = session.metadata?.billingInterval || interval;
       const sessionIsAnnual = detectedInterval === 'annual';
       const actualPlan = sessionIsAnnual
-        ? 'WhatsApp CRM & Gemini AI Pro - Annual (4,500 LKR/mo, 54,000 LKR/yr)'
-        : 'WhatsApp CRM & Gemini AI Pro - Monthly (5,000 LKR/mo)';
+        ? 'WhatsApp CRM & Zevarone AI Pro - Annual (4,500 LKR/mo, 54,000 LKR/yr)'
+        : 'WhatsApp CRM & Zevarone AI Pro - Monthly (5,000 LKR/mo)';
 
       const actualExpiresAt = new Date(
         Date.now() + (sessionIsAnnual ? 365 : 30) * 24 * 60 * 60 * 1000

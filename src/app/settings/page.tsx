@@ -156,7 +156,7 @@ export default function SettingsPage() {
         notify({
           type: 'success',
           title: 'Settings Saved to Supabase',
-          message: `Updated Gemini AI instructions and rules for ${data.tenant.name}.`,
+          message: `Updated Zevarone AI instructions and rules for ${data.tenant.name}.`,
         });
       } else {
         notify({
@@ -185,7 +185,7 @@ export default function SettingsPage() {
           AI &amp; Automation Rules ({selectedTenant?.name})
         </h2>
         <p className="text-xs text-[#667781] mt-1">
-          Customize automated greeting sequences and Gemini AI bot instructions specifically for this business.
+          Customize automated greeting sequences and Zevarone AI bot instructions specifically for this business.
         </p>
       </div>
 
@@ -195,7 +195,7 @@ export default function SettingsPage() {
             <div className="p-4 rounded-xl bg-[#D9FDD3] border border-[#25D366]/60 text-xs text-[#075E54] flex items-center gap-2 animate-in fade-in">
               <CheckCircle2 className="w-4 h-4 text-[#075E54] flex-shrink-0" />
               <span className="font-semibold">
-                Settings successfully saved to Supabase! Gemini AI will use these instructions for future messages.
+                Settings successfully saved to Supabase! Zevarone AI will use these instructions for future messages.
               </span>
             </div>
           )}
@@ -294,9 +294,9 @@ export default function SettingsPage() {
               >
                 <div className="flex items-center gap-2 mb-1">
                   <Sparkles className="w-4 h-4 text-[#00A884]" />
-                  <span className="font-bold text-[#111B21] text-sm">Option 2: Gemini AI Chatbot Mode</span>
+                  <span className="font-bold text-[#111B21] text-sm">Option 2: Zevarone AI Autonomous Concierge Mode</span>
                 </div>
-                <p className="text-xs text-[#667781]">Gemini acts as an AI employee answering customer questions.</p>
+                <p className="text-xs text-[#667781]">Zevarone AI acts as a dedicated 24/7 sales agent answering customer questions.</p>
               </div>
             </div>
           </div>
@@ -480,10 +480,10 @@ export default function SettingsPage() {
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#111B21] mb-1.5 flex items-center justify-between">
               <span className="flex items-center gap-1.5 font-bold">
                 <Sparkles className="w-3.5 h-3.5 text-[#00A884]" />
-                Gemini AI Persona &amp; System Instructions
+                Zevarone AI Persona &amp; System Instructions
               </span>
               <span className="text-[10px] text-[#075E54] font-bold bg-[#EFEAE2] border border-[#E9EDEF] px-2 py-0.5 rounded">
-                Model: gemini-flash-lite-latest
+                Engine: Zevarone Neural v2.5
               </span>
             </label>
             <textarea

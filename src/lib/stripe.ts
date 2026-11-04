@@ -4,8 +4,8 @@ export const SUBSCRIPTION_PRICE_MONTHLY_LKR = 5000; // 5,000 LKR/month
 export const SUBSCRIPTION_PRICE_ANNUAL_MONTHLY_LKR = 4500; // 4,500 LKR/month
 export const SUBSCRIPTION_PRICE_ANNUAL_TOTAL_LKR = 54000; // 54,000 LKR/year (save 6,000 LKR)
 
-export const SUBSCRIPTION_PLAN_MONTHLY = 'WhatsApp CRM & Gemini AI Pro - Monthly (5,000 LKR/mo)';
-export const SUBSCRIPTION_PLAN_ANNUAL = 'WhatsApp CRM & Gemini AI Pro - Annual (4,500 LKR/mo, 54,000 LKR/yr)';
+export const SUBSCRIPTION_PLAN_MONTHLY = 'WhatsApp CRM & Zevarone AI Pro - Monthly (5,000 LKR/mo)';
+export const SUBSCRIPTION_PLAN_ANNUAL = 'WhatsApp CRM & Zevarone AI Pro - Annual (4,500 LKR/mo, 54,000 LKR/yr)';
 
 export function getStripe(): Stripe | null {
   const secretKey = (process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY || '').trim();

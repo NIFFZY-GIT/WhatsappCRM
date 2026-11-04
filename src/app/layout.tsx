@@ -4,8 +4,8 @@ import { AppProvider } from '@/context/AppContext';
 import AppShell from '@/components/AppShell';
 
 export const metadata: Metadata = {
-  title: 'WhatsApp Business CRM & Gemini AI Hub',
-  description: 'Connect WhatsApp Business Cloud API with Automated Sequences and Google Gemini AI Chatbot',
+  title: 'WhatsApp Business CRM & Zevarone AI Hub',
+  description: 'Connect WhatsApp Business Cloud API with Automated Sequences and Zevarone Neural AI Concierge',
 };
 
 export default function RootLayout({

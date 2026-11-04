@@ -58,7 +58,7 @@ export default function SimulatorPage() {
         notify({
           type: 'success',
           title: 'Simulation Pipeline Executed',
-          message: `Received reply from Gemini AI in ${data.mode === 'ai_chatbot' ? 'AI Chatbot' : 'Template'} mode.`,
+          message: `Received reply from Zevarone AI in ${data.mode === 'ai_chatbot' ? 'AI Chatbot' : 'Template'} mode.`,
           actionUrl: '/inbox',
           actionLabel: 'View in Inbox',
         });
@@ -192,7 +192,7 @@ export default function SimulatorPage() {
               {/* Bot Reply Bubble */}
               <div className="p-4 rounded-xl bg-[#D9FDD3] border border-[#25D366]/30 text-xs shadow-xs">
                 <div className="font-bold text-[#075E54] mb-1 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#00A884]" /> Gemini AI Bot:
+                  <Sparkles className="w-3.5 h-3.5 text-[#00A884]" /> Zevarone AI Agent:
                 </div>
                 <p className="text-[#111B21] whitespace-pre-line leading-relaxed">
                   {simResult.botReply}

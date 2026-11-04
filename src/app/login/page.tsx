@@ -103,7 +103,7 @@ function ChatDemo() {
               >
                 {b.from === 'ai' && (
                   <span className="flex items-center gap-1 text-[10px] font-semibold text-[#7FE3C8] mb-0.5">
-                    <Sparkles className="w-3 h-3" /> Gemini AI
+                    <Sparkles className="w-3 h-3" /> Zevarone AI
                   </span>
                 )}
                 {b.text}
@@ -378,7 +378,7 @@ export default function LoginPage() {
                 Answer every customer, even while you sleep.
               </h2>
               <p className="mt-2 text-sm text-[#8696A0] leading-relaxed">
-                Gemini AI replies from your product catalog, and every chat stays in one shared inbox.
+                Zevarone AI replies from your product catalog, and every chat stays in one shared inbox.
               </p>
             </div>
           </div>
@@ -592,7 +592,7 @@ export default function LoginPage() {
                   <ul className="mt-2.5 space-y-1.5 text-[13px] text-[#3B4A54]">
                     {[
                       'Private shared inbox for your team',
-                      'Gemini AI auto-replies from your catalog',
+                      'Zevarone AI auto-replies from your catalog',
                       'Secure payment through Stripe next',
                     ].map((t) => (
                       <li key={t} className="flex items-center gap-2">

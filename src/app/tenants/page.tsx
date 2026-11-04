@@ -195,7 +195,7 @@ export default function TenantsPage() {
                         : 'bg-[#EFEAE2] text-[#075E54]'
                     }`}
                   >
-                    {t.defaultMode === 'ai_chatbot' ? '🤖 Gemini AI' : '⚡ Auto-Reply'}
+                    {t.defaultMode === 'ai_chatbot' ? '🤖 Zevarone AI' : '⚡ Auto-Reply'}
                   </span>
 
                   <div className="flex items-center gap-1">
@@ -315,7 +315,7 @@ export default function TenantsPage() {
                   onChange={(e) => setNewTenantMode(e.target.value as BotMode)}
                   className="w-full px-3 py-2 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
                 >
-                  <option value="ai_chatbot">Option 2: Gemini AI Chatbot</option>
+                  <option value="ai_chatbot">Option 2: Zevarone AI Sales Concierge</option>
                   <option value="automated">Option 1: Automated Template</option>
                 </select>
               </div>

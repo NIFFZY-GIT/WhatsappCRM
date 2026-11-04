@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
         const interval = (session.metadata?.billingInterval as 'monthly' | 'annual') || 'monthly';
         const isAnnual = interval === 'annual';
         const planName = isAnnual
-          ? 'WhatsApp CRM & Gemini AI Pro - Annual (4,500 LKR/mo, 54,000 LKR/yr)'
-          : 'WhatsApp CRM & Gemini AI Pro - Monthly (5,000 LKR/mo)';
+          ? 'WhatsApp CRM & Zevarone AI Pro - Annual (4,500 LKR/mo, 54,000 LKR/yr)'
+          : 'WhatsApp CRM & Zevarone AI Pro - Monthly (5,000 LKR/mo)';
 
         const expiresAt = new Date(
           Date.now() + (isAnnual ? 365 : 30) * 24 * 60 * 60 * 1000
@@ -85,8 +85,8 @@ export async function POST(req: NextRequest) {
 
           const isAnnual = user.billingInterval === 'annual';
           const planName = isAnnual
-            ? 'WhatsApp CRM & Gemini AI Pro - Annual (4,500 LKR/mo, 54,000 LKR/yr)'
-            : 'WhatsApp CRM & Gemini AI Pro - Monthly (5,000 LKR/mo)';
+            ? 'WhatsApp CRM & Zevarone AI Pro - Annual (4,500 LKR/mo, 54,000 LKR/yr)'
+            : 'WhatsApp CRM & Zevarone AI Pro - Monthly (5,000 LKR/mo)';
 
           await updateUserSubscription(user.id, 'active', {
             customerId: customerId || user.stripeCustomerId,

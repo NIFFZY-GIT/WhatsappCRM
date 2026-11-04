@@ -216,7 +216,7 @@ function HeroPhone() {
               <div className="flex justify-end">
                 <div className="bubble-in max-w-[86%] bg-[#005C4B] text-[#E9EDEF] text-[13px] rounded-2xl rounded-tr-sm px-3 py-2 space-y-2">
                   <span className="flex items-center gap-1 text-[10px] font-semibold text-[#7FE3C8]">
-                    <Sparkles className="w-3 h-3" /> Gemini AI
+                    <Sparkles className="w-3 h-3" /> Zevarone AI
                   </span>
                   <p>Yes, it’s in stock! Here are the details:</p>
                   <div className="flex items-center gap-2.5 rounded-lg bg-black/25 p-2">
@@ -274,7 +274,7 @@ function AiMock() {
       </div>
       <div className="pop ml-auto max-w-[88%] rounded-2xl rounded-tr-sm bg-[#D9FDD3] border border-emerald-200 px-3.5 py-2.5 text-slate-900 shadow-sm space-y-1.5" style={{ animationDelay: '.25s' }}>
         <p className="flex items-center gap-1 text-[11px] font-bold text-[#008069]">
-          <Bot className="w-3.5 h-3.5" /> Gemini AI · 0.8s
+          <Bot className="w-3.5 h-3.5" /> Zevarone AI · 0.8s
         </p>
         <p>Yes! 2 left at Rs. 185,000. It comes with a certificate of authenticity.</p>
       </div>
@@ -363,7 +363,7 @@ const TOUR = [
     id: 'ai',
     label: 'AI replies',
     icon: Bot,
-    title: 'Gemini answers while you sleep',
+    title: 'Zevarone AI answers while you sleep',
     desc: 'It knows your catalog, your prices and your policies, so customers get a real answer in seconds instead of a “we’ll get back to you”.',
     points: ['Written in your brand voice', 'Quotes live prices in LKR', 'Hands the chat to a person when needed'],
     Mock: AiMock,
@@ -402,7 +402,7 @@ const TOUR = [
 /* ================================================================== */
 
 const FEATURES = [
-  { icon: Bot, title: 'Gemini 2.5 AI concierge', desc: 'Answers customers 24/7 in your brand voice, using your catalog and policies.' },
+  { icon: Bot, title: 'Zevarone Neural AI Concierge', desc: 'Answers customers 24/7 in your brand voice, using your catalog and policies.' },
   { icon: ImageIcon, title: 'Welcome photo sequences', desc: 'Greets first-time customers with curated photos and captions before the chat starts.' },
   { icon: MessageSquare, title: 'Shared team inbox', desc: 'Real-time chats for the whole team on a single business number, with sound alerts.' },
   { icon: ShoppingBag, title: 'Product catalog and quotes', desc: 'Send product cards with photos, stock and prices in LKR right inside the chat.' },
@@ -411,7 +411,7 @@ const FEATURES = [
 ];
 
 const PLAN_FEATURES = [
-  'Google Gemini 2.5 AI sales concierge',
+  'Zevarone Proprietary AI Sales Concierge',
   'Multi-photo welcome sequences with captions',
   'Shared team inbox with sound alerts',
   'Product catalog and WhatsApp quotes',
@@ -429,8 +429,8 @@ const FAQS = [
     a: 'Yes. Any number registered under your Meta Cloud API account works. In Settings, add your Phone Number ID and Meta token.',
   },
   {
-    q: 'How does Gemini give accurate answers?',
-    a: 'You write instructions in Settings covering your business, pricing rules and refund policy. Gemini also reads your live product catalog, so it quotes real prices in LKR.',
+    q: 'How does Zevarone AI give accurate answers?',
+    a: 'You write instructions in Settings covering your business, pricing rules and refund policy. Zevarone AI also reads your live product catalog, so it quotes real prices in LKR.',
   },
   {
     q: 'What is the welcome photo sequence?',
@@ -619,7 +619,7 @@ export default function LandingPage() {
           <div className="text-center lg:text-left">
             <div className="hero-1 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-emerald-200 text-xs font-semibold text-[#008069] shadow-sm">
               <span className="live-dot h-2 w-2 rounded-full bg-[#00A884]" />
-              Built on the Meta WhatsApp Cloud API and Google Gemini 2.5
+              Built on the Meta WhatsApp Cloud API and Zevarone Neural AI
             </div>
 
             <h1 className="hero-2 mt-6 text-4xl sm:text-5xl lg:text-[3.6rem] font-extrabold tracking-tight leading-[1.08]">
@@ -627,7 +627,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="hero-3 mt-5 text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
-              Answer questions, share your catalog, send welcome photos and run broadcasts from one shared inbox. Gemini AI handles the routine chats, and your team steps in when it matters.
+              Answer questions, share your catalog, send welcome photos and run broadcasts from one shared inbox. Zevarone AI handles the routine chats, and your team steps in when it matters.
             </p>
 
             <div className="hero-4 mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3">
@@ -802,7 +802,7 @@ export default function LandingPage() {
                 <h3 className="mt-1 text-xl font-bold text-slate-900">Instant, automated and shared</h3>
                 <ul className="mt-5 space-y-3.5 text-sm text-slate-700">
                   {[
-                    ['Replies in seconds:', 'Gemini answers day and night.'],
+                    ['Replies in seconds:', 'Zevarone AI answers day and night.'],
                     ['Shared inbox:', 'several agents work chats at once.'],
                     ['Welcome photos:', 'sent automatically on first contact.'],
                     ['Flat price:', '5,000 LKR a month, billed by Stripe.'],
@@ -861,7 +861,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="relative max-w-lg mx-auto rounded-3xl border-2 border-[#008069] bg-white p-8 shadow-2xl shadow-[#008069]/15 overflow-hidden">
               <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-[#00A884]/10 blur-2xl" />
-              <h3 className="text-2xl font-extrabold">WhatsApp CRM &amp; Gemini Pro</h3>
+              <h3 className="text-2xl font-extrabold">WhatsApp CRM &amp; Zevarone AI Pro</h3>
               <p className="mt-1 text-sm text-slate-500">For shops, brands and service businesses of any size.</p>
 
               <div className="mt-6 flex items-baseline gap-2">

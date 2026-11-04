@@ -55,7 +55,7 @@ export default function SenderPage() {
       if (data.success) {
         if (data.whatsapp?.success) {
           const successMsg = `Opening WhatsApp message successfully dispatched to +${clientPhone}! Mode: ${
-            sendMode === 'ai_chatbot' ? 'Gemini AI Assistant' : 'Automated Template'
+            sendMode === 'ai_chatbot' ? 'Zevarone AI Assistant' : 'Automated Template'
           }.`;
           setResult({
             type: 'success',
@@ -125,7 +125,7 @@ export default function SenderPage() {
           Send WhatsApp &amp; New Lead Intake
         </h2>
         <p className="text-xs text-[#667781] mt-1">
-          Add a client and dispatch an automated opening sequence or initiate Gemini AI conversation for{' '}
+          Add a client and dispatch an automated opening sequence or initiate Zevarone AI conversation for{' '}
           <strong className="text-[#111B21]">{selectedTenant?.name}</strong>.
         </p>
       </div>
@@ -258,11 +258,11 @@ export default function SenderPage() {
                   </div>
                   <span className="font-semibold text-[#111B21] text-sm flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-[#00A884]" />
-                    Option 2: Gemini AI Chatbot
+                    Option 2: Zevarone AI Sales Concierge
                   </span>
                 </div>
                 <p className="text-xs text-[#667781] pl-6">
-                  Engages using Gemini Flash AI trained on your live product catalogue and pricing.
+                  Engages using Zevarone Neural AI trained on your live product catalogue and pricing.
                 </p>
               </div>
             </div>

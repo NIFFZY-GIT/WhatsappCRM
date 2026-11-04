@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       escapeCsv(c.name || 'Unnamed Client'),
       escapeCsv(c.phone ? `+${c.phone.replace(/\D/g, '')}` : ''),
       escapeCsv(c.status || 'active'),
-      escapeCsv(c.mode === 'ai_chatbot' ? 'Gemini AI Autopilot' : 'Automated Template'),
+      escapeCsv(c.mode === 'ai_chatbot' ? 'Zevarone AI Autopilot' : 'Automated Template'),
       escapeCsv(c.needsHumanAssistance ? 'YES (Human Support Needed)' : 'NO'),
       escapeCsv(c.unreadCount || 0),
       escapeCsv(c.assignedAgent || 'Unassigned'),
