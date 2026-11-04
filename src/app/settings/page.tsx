@@ -155,7 +155,7 @@ export default function SettingsPage() {
         setTimeout(() => setSavedNotice(false), 3000);
         notify({
           type: 'success',
-          title: 'Settings Saved to Supabase',
+          title: 'Settings Saved Successfully',
           message: `Updated Zevarone AI instructions and rules for ${data.tenant.name}.`,
         });
       } else {
@@ -195,7 +195,7 @@ export default function SettingsPage() {
             <div className="p-4 rounded-xl bg-[#D9FDD3] border border-[#25D366]/60 text-xs text-[#075E54] flex items-center gap-2 animate-in fade-in">
               <CheckCircle2 className="w-4 h-4 text-[#075E54] flex-shrink-0" />
               <span className="font-semibold">
-                Settings successfully saved to Supabase! Zevarone AI will use these instructions for future messages.
+                Settings successfully saved to Cloud! Zevarone AI will use these instructions for future messages.
               </span>
             </div>
           )}

@@ -58,7 +58,7 @@ export default function PrivacyPolicy() {
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li><strong>Meta Platforms, Inc.:</strong> Facilitates the transmission of WhatsApp messages via the Meta Graph API.</li>
               <li><strong>Zevarone Neural AI Engine:</strong> Securely processes and generates contextual answers to customer inquiries with catalog matching.</li>
-              <li><strong>Supabase:</strong> Provides secure encrypted database storage for customer interaction logs.</li>
+              <li><strong>Cloud Storage:</strong> Provides secure encrypted database storage for customer interaction logs.</li>
             </ul>
           </section>
 

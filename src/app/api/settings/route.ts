@@ -12,7 +12,7 @@ export async function GET() {
   return NextResponse.json({
     settings,
     database: {
-      type: isSupabaseConfigured() ? 'supabase' : 'local_file',
+      type: isSupabaseConfigured() ? 'cloud' : 'local_file',
       connected: isSupabaseConfigured(),
       details: getSupabaseDetails(),
     },

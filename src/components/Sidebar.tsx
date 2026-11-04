@@ -354,7 +354,7 @@ export default function Sidebar() {
                   databaseStatus?.connected ? 'bg-[#25D366]' : 'bg-amber-400'
                 }`}
               />
-              {databaseStatus?.connected ? 'Supabase' : 'Local'}
+              {databaseStatus?.connected ? 'Cloud Active' : 'Local'}
             </span>
           </div>
 

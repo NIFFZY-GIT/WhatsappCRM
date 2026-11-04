@@ -45,7 +45,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </h3>
 
             <p className="text-xs text-[#667781] leading-relaxed mb-4">
-              An unexpected error occurred while rendering this interface. Your data in Supabase is safe.
+              An unexpected error occurred while rendering this interface. Your data in cloud storage is safe.
             </p>
 
             {this.state.error?.message && (

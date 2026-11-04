@@ -241,7 +241,7 @@ export default function CataloguePage() {
       {/* Products Grid */}
       {isLoading ? (
         <div className="p-12 text-center text-[#667781] text-sm">
-          Loading catalogue items from Supabase...
+          Loading catalogue items from cloud database...
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-16 bg-white border-2 border-dashed border-[#E9EDEF] rounded-2xl p-8">

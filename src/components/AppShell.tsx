@@ -189,7 +189,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     databaseStatus?.connected ? 'bg-[#25D366]' : 'bg-amber-500'
                   }`}
                 />
-                {databaseStatus?.connected ? 'Supabase Connected' : 'Local Store'}
+                {databaseStatus?.connected ? 'Cloud Active' : 'Local Store'}
               </span>
 
               <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#D9FDD3] text-[#075E54] font-semibold border border-[#25D366]/40">
