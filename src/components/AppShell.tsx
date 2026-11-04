@@ -226,20 +226,30 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </main>
 
         {/* Global Footer with Powered by Zevarone */}
-        <footer className="mt-auto py-4 px-6 sm:px-8 border-t border-[#E9EDEF] bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#667781]">
-          <div className="flex items-center gap-2">
-            <span>© {new Date().getFullYear()} WhatsApp Business CRM &amp; Gemini AI Hub</span>
+        <footer className="mt-auto py-3.5 px-6 sm:px-8 border-t border-[#E9EDEF] bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#667781]">
+          <div className="flex items-center gap-3 text-[#667781] flex-wrap">
+            <span className="font-semibold text-[#111B21]">© {new Date().getFullYear()} ZEVARONE</span>
+            <span className="text-slate-300 hidden sm:inline">&bull;</span>
+            <span>WhatsApp Business AI CRM Hub</span>
+            <span className="text-slate-300 hidden sm:inline">&bull;</span>
+            <Link href="/privacy" className="hover:text-[#008069] transition">
+              Privacy Policy
+            </Link>
+            <span className="text-slate-300 hidden sm:inline">&bull;</span>
+            <Link href="/terms" className="hover:text-[#008069] transition">
+              Terms
+            </Link>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold text-[#8696A0] uppercase tracking-wider">
-              Powered by
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[10px] font-bold tracking-widest text-[#8696A0] uppercase">
+              POWERED BY
             </span>
-            <div className="h-7 px-3.5 py-1 bg-[#111B21] rounded-lg flex items-center justify-center shadow-2xs hover:bg-[#202C33] transition">
+            <div className="h-6 px-3 bg-[#111B21] rounded-md flex items-center justify-center shadow-xs">
               <img
                 src="/newlogos/Asset 13.svg"
                 alt="ZEVARONE"
-                className="h-3.5 w-auto object-contain"
+                className="h-3 w-auto object-contain"
               />
             </div>
           </div>

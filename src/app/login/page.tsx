@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import Navbar from '@/components/Navbar';
 import {
   Building2,
   Mail,
@@ -331,7 +332,7 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-[1.05fr_1fr] bg-white text-[#111B21]">
+    <div className="min-h-screen bg-white flex flex-col font-sans text-[#111B21]">
       <style>{`
         @keyframes bubbleIn { from { opacity:0; transform: translateY(10px) scale(.96);} to { opacity:1; transform:none;} }
         @keyframes dot { 0%,60%,100% { transform: translateY(0); opacity:.4;} 30% { transform: translateY(-4px); opacity:1;} }
@@ -361,68 +362,47 @@ export default function LoginPage() {
         }
       `}</style>
 
-      {/* ------------------------- Left: brand panel ------------------------- */}
-      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#0B141A] px-12 py-10 text-white">
-        <div className="orb-a absolute -top-24 -left-24 h-96 w-96 rounded-full bg-[#00A884]/25 blur-3xl" />
-        <div className="orb-b absolute -bottom-32 -right-20 h-[28rem] w-[28rem] rounded-full bg-[#25D366]/15 blur-3xl" />
+      {/* Top Navbar: Always shown even on login page */}
+      <Navbar showLinks={true} />
 
-        <Link href="/" className="relative flex items-center gap-3 w-fit">
-          <div className="h-10 w-10 rounded-xl bg-[#008069] flex items-center justify-center font-bold text-lg shadow-lg shadow-[#008069]/30">
-            W
-          </div>
-          <span className="font-semibold text-[15px]">WhatsApp CRM &amp; Gemini AI Hub</span>
-        </Link>
+      <div className="flex-1 grid lg:grid-cols-[1.05fr_1fr] bg-white">
+        {/* ------------------------- Left: brand panel ------------------------- */}
+        <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#0B141A] px-12 py-12 text-white">
+          <div className="orb-a absolute -top-24 -left-24 h-96 w-96 rounded-full bg-[#00A884]/25 blur-3xl" />
+          <div className="orb-b absolute -bottom-32 -right-20 h-[28rem] w-[28rem] rounded-full bg-[#25D366]/15 blur-3xl" />
 
-        <div className="relative page-in">
-          <ChatDemo />
-          <div className="mt-10 max-w-md mx-auto text-center">
-            <h2 className="text-2xl font-bold leading-snug">
-              Answer every customer, even while you sleep.
-            </h2>
-            <p className="mt-2 text-sm text-[#8696A0] leading-relaxed">
-              Gemini AI replies from your product catalog, and every chat stays in one shared inbox.
-            </p>
-          </div>
-        </div>
-
-        <div className="relative flex items-center justify-center gap-2 text-[11px] text-[#8696A0]">
-          <span>Official Meta Cloud API platform</span>
-          <span className="h-1 w-1 rounded-full bg-[#8696A0]/60" />
-          <span>Powered by</span>
-          <div className="bg-white/10 px-2.5 py-1 rounded-md">
-            <Image
-              src="/newlogos/Asset 13.svg"
-              alt="ZEVARONE"
-              width={76}
-              height={14}
-              className="h-3.5 w-auto object-contain"
-              priority
-            />
-          </div>
-        </div>
-      </aside>
-
-      {/* ------------------------- Right: form panel ------------------------- */}
-      <main className="relative flex flex-col bg-white">
-        <div className="flex items-center justify-between px-6 sm:px-10 pt-6">
-          {/* logo shows on mobile only (left panel is hidden) */}
-          <Link href="/" className="lg:hidden flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-[#008069] flex items-center justify-center text-white font-bold">
-              W
+          <div className="relative page-in my-auto">
+            <ChatDemo />
+            <div className="mt-8 max-w-md mx-auto text-center">
+              <h2 className="text-2xl font-bold leading-snug">
+                Answer every customer, even while you sleep.
+              </h2>
+              <p className="mt-2 text-sm text-[#8696A0] leading-relaxed">
+                Gemini AI replies from your product catalog, and every chat stays in one shared inbox.
+              </p>
             </div>
-            <span className="font-semibold text-sm">WhatsApp CRM</span>
-          </Link>
-          <Link
-            href="/"
-            className="ml-auto inline-flex items-center gap-1.5 text-[13px] font-medium text-[#54656F] hover:text-[#008069] transition"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to home
-          </Link>
-        </div>
+          </div>
 
-        <div className="flex-1 flex items-center justify-center px-6 sm:px-10 py-10">
-          <div className="w-full max-w-[420px]">
+          <div className="relative flex items-center justify-center gap-2 text-[11px] text-[#8696A0]">
+            <span>Official Meta Cloud API platform</span>
+            <span className="h-1 w-1 rounded-full bg-[#8696A0]/60" />
+            <span>Powered by</span>
+            <div className="bg-white/10 px-2.5 py-1 rounded-md">
+              <Image
+                src="/newlogos/Asset 13.svg"
+                alt="ZEVARONE"
+                width={76}
+                height={14}
+                className="h-3.5 w-auto object-contain"
+                priority
+              />
+            </div>
+          </div>
+        </aside>
+
+        {/* ------------------------- Right: form panel ------------------------- */}
+        <main className="relative flex flex-col justify-center bg-white px-6 sm:px-12 py-12">
+          <div className="w-full max-w-[420px] mx-auto">
             <div className="mb-7">
               <h1 className="text-[28px] font-bold tracking-tight">
                 {mode === 'signin' ? 'Welcome back' : 'Create your workspace'}
@@ -637,24 +617,40 @@ export default function LoginPage() {
               </form>
             )}
           </div>
+        </main>
+      </div>
+
+      {/* Global Sleek Footer */}
+      <footer className="border-t border-[#E9EDEF] bg-white py-4 px-6 sm:px-10 text-xs text-[#667781] flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+        <div className="flex items-center gap-3 text-[#667781] flex-wrap">
+          <span className="font-semibold text-[#111B21]">© {new Date().getFullYear()} ZEVARONE</span>
+          <span className="text-slate-300 hidden sm:inline">&bull;</span>
+          <span>WhatsApp Business AI CRM Hub</span>
+          <span className="text-slate-300 hidden sm:inline">&bull;</span>
+          <Link href="/privacy" className="hover:text-[#008069] transition">
+            Privacy Policy
+          </Link>
+          <span className="text-slate-300 hidden sm:inline">&bull;</span>
+          <Link href="/terms" className="hover:text-[#008069] transition">
+            Terms of Service
+          </Link>
         </div>
 
-        <footer className="px-6 sm:px-10 pb-6 text-center text-xs text-[#8696A0]">
-          © 2026 WhatsApp Business CRM &amp; Gemini AI Hub. All rights reserved.
-          <div className="lg:hidden mt-3 flex items-center justify-center gap-2">
-            <span className="text-[10px] font-bold tracking-widest text-[#54656F]">POWERED BY</span>
-            <div className="bg-[#111B21] px-2.5 py-1 rounded">
-              <Image
-                src="/newlogos/Asset 13.svg"
-                alt="ZEVARONE"
-                width={76}
-                height={14}
-                className="h-3.5 w-auto object-contain"
-              />
-            </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] font-bold tracking-widest text-[#8696A0] uppercase">
+            POWERED BY
+          </span>
+          <div className="h-6 px-3 bg-[#111B21] rounded-md flex items-center justify-center shadow-xs">
+            <Image
+              src="/newlogos/Asset 13.svg"
+              alt="ZEVARONE"
+              width={76}
+              height={14}
+              className="h-3 w-auto object-contain"
+            />
           </div>
-        </footer>
-      </main>
+        </div>
+      </footer>
     </div>
   );
 }

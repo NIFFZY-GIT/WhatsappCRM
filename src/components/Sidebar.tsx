@@ -293,11 +293,11 @@ export default function Sidebar() {
         </nav>
 
         {/* User Account / SaaS Auth Section */}
-        <div className="p-3 border-t border-[#2A3942] bg-[#111B21]">
+        <div className="p-3 border-t border-[#2A3942] bg-[#111B21] shrink-0">
           {currentUser ? (
             <div className="flex items-center justify-between p-2 rounded-xl bg-[#202C33] border border-[#2A3942]">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-[#00A884] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[#008069] text-white flex items-center justify-center font-bold text-xs shrink-0">
                   {currentUser.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -309,7 +309,7 @@ export default function Sidebar() {
                 <Link
                   href="/billing"
                   className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                    isProUser ? 'bg-[#00A884] text-white' : 'bg-amber-400 text-black'
+                    isProUser ? 'bg-[#008069] text-white' : 'bg-amber-400 text-black'
                   }`}
                   title={isProUser ? 'Active Pro Tier' : 'Upgrade to Pro'}
                 >
@@ -330,16 +330,16 @@ export default function Sidebar() {
               className="w-full py-2 px-3 rounded-xl bg-[#202C33] hover:bg-[#2A3942] border border-[#2A3942] text-xs font-semibold text-[#25D366] flex items-center justify-center gap-2 transition"
             >
               <LogIn className="w-4 h-4" />
-              Sign In / Switch Account
+              Sign In
             </Link>
           )}
         </div>
 
         {/* Bottom System & Database Status */}
-        <div className="p-4 border-t border-[#2A3942] bg-[#0C1317] text-[11px] space-y-2.5">
+        <div className="px-4 py-3 border-t border-[#2A3942] bg-[#0C1317] text-[11px] space-y-2 shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-[#8696A0] flex items-center gap-1.5">
-              <Database className="w-3.5 h-3.5 text-[#8696A0]" />
+              <Database className="w-3 h-3 text-[#8696A0]" />
               Database
             </span>
             <span
@@ -354,39 +354,18 @@ export default function Sidebar() {
                   databaseStatus?.connected ? 'bg-[#25D366]' : 'bg-amber-400'
                 }`}
               />
-              {databaseStatus?.connected ? 'Supabase Cloud' : 'Local File'}
+              {databaseStatus?.connected ? 'Supabase' : 'Local'}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-[#8696A0] flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-[#8696A0]" />
-              Gemini Engine
+              <Zap className="w-3 h-3 text-[#8696A0]" />
+              AI Engine
             </span>
             <span className="font-semibold text-[#E9EDEF] text-[10px] bg-[#202C33] px-2 py-0.5 rounded border border-[#2A3942]">
               Gemini Flash ⚡
             </span>
-          </div>
-
-          <div className="pt-2 border-t border-[#2A3942] flex items-center justify-between">
-            <span className="text-[10px] text-[#8696A0] uppercase font-semibold tracking-wider">Powered by</span>
-            <img
-              src="/newlogos/Asset 13.svg"
-              alt="ZEVARONE"
-              className="h-3 w-auto object-contain opacity-90 hover:opacity-100 transition"
-            />
-          </div>
-
-          <div className="pt-1.5 flex items-center justify-between text-[10px] text-[#8696A0]">
-            <Link href="/privacy" className="hover:text-[#E9EDEF] transition">
-              Privacy Policy
-            </Link>
-            <span>&bull;</span>
-            <Link href="/terms" className="hover:text-[#E9EDEF] transition">
-              Terms
-            </Link>
-            <span>&bull;</span>
-            <span>v2.0</span>
           </div>
         </div>
       </aside>
