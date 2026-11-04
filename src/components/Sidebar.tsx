@@ -109,16 +109,14 @@ export default function Sidebar() {
       {/* Mobile Top Header */}
       <div className="lg:hidden bg-[#111B21] text-[#E9EDEF] px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-[#2A3942]">
         <Link href="/" className="flex items-center gap-2">
-          <div className="bg-white px-2.5 py-1.5 rounded-lg flex items-center shadow-xs">
+          <div className=" px-2.5 py-1.5 rounded-lg flex items-center shadow-xs">
             <img
-              src="/zevaroneassets/Asset 22.png"
-              alt="ZEVARONE. CRM"
+              src="/zevaroneassets/Asset 24.png"
+              alt="ZEVARONE.CRM"
               className="h-5 w-auto object-contain"
             />
           </div>
-          <span className="text-[9px] bg-[#00A884]/20 text-[#25D366] font-bold px-1.5 py-0.5 rounded border border-[#00A884]/40">
-            Pro
-          </span>
+        
         </Link>
 
         <button
@@ -147,16 +145,14 @@ export default function Sidebar() {
         {/* Brand Header */}
         <div className="p-4 border-b border-[#2A3942] flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="bg-white px-3 py-2 rounded-xl flex items-center shadow-xs transition group-hover:bg-slate-50">
+            <div className=" px-3 py-2 rounded-xl flex items-center shadow-xs transition ">
               <img
-                src="/zevaroneassets/Asset 22.png"
-                alt="ZEVARONE. CRM"
+                src="/zevaroneassets/Asset 24.png"
+                alt="ZEVARONE.CRM"
                 className="h-6 w-auto object-contain"
               />
             </div>
-            <span className="text-[9px] bg-[#00A884]/20 text-[#25D366] font-bold px-1.5 py-0.5 rounded border border-[#00A884]/40 shrink-0">
-              Pro
-            </span>
+          
           </Link>
 
           <button

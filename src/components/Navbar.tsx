@@ -39,8 +39,8 @@ export default function Navbar({ showLinks = true }: NavbarProps) {
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
           <img
-            src="/zevaroneassets/Asset 22.png"
-            alt="ZEVARONE. CRM"
+            src="/zevaroneassets/Asset 24.png"
+            alt="ZEVARONE.CRM"
             className="h-8 sm:h-9 w-auto object-contain transition group-hover:opacity-90"
           />
         </Link>
@@ -52,7 +52,7 @@ export default function Navbar({ showLinks = true }: NavbarProps) {
               <a
                 key={link.href}
                 href={link.href}
-                className="px-3.5 py-2 rounded-lg hover:text-[#008069] hover:bg-[#F0F2F5] transition"
+                className="px-3.5 py-2 rounded-lg hover:text-[#008069]  transition"
               >
                 {link.label}
               </a>
