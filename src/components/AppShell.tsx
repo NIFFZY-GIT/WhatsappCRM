@@ -20,8 +20,10 @@ import {
 } from 'lucide-react';
 import ErrorBoundary from './ErrorBoundary';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const {
     selectedTenant,
     databaseStatus,
@@ -35,6 +37,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   } = useApp();
 
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
+
+  // Landing page and Auth page render with full width, custom header & footer
+  if (pathname === '/' || pathname === '/login') {
+    return (
+      <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-sans text-[#111B21]">
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-sans text-[#111B21]">

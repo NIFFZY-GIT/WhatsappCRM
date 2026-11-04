@@ -222,7 +222,7 @@ export default function Sidebar() {
         {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href === '/inbox' && pathname === '/');
+            const isActive = pathname === item.href;
             const Icon = item.icon;
             return (
               <Link
