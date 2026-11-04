@@ -84,24 +84,24 @@ export default function Sidebar() {
             badgeColor: 'bg-emerald-400 text-slate-950 font-bold',
           },
           {
+            label: 'Client Businesses',
+            href: '/tenants',
+            icon: Building2,
+            badge: `${tenants.length}`,
+            badgeColor: 'bg-[#202C33] text-[#8696A0] border border-[#2A3942]',
+          },
+          {
+            label: 'Webhook & Diagnostics',
+            href: '/setup',
+            icon: ShieldCheck,
+          },
+          {
             label: 'Offline Simulator',
             href: '/simulator',
             icon: Terminal,
           },
         ]
       : []),
-    {
-      label: 'Client Businesses',
-      href: '/tenants',
-      icon: Building2,
-      badge: `${tenants.length}`,
-      badgeColor: 'bg-[#202C33] text-[#8696A0] border border-[#2A3942]',
-    },
-    {
-      label: 'Webhook & API Setup',
-      href: '/setup',
-      icon: ShieldCheck,
-    },
   ];
 
   return (
@@ -168,33 +168,57 @@ export default function Sidebar() {
 
         {/* Business Selector (Tenant Switcher) */}
         <div className="p-4 border-b border-[#2A3942]">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[#8696A0] mb-1.5 px-1">
-            Active Client Business
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[#8696A0] mb-1.5 px-1 flex items-center justify-between">
+            <span>{isZevaroneAdmin(currentUser) ? 'Active Business (Master)' : 'My Business'}</span>
+            {isZevaroneAdmin(currentUser) && (
+              <span className="text-[9px] text-[#25D366] font-semibold bg-[#25D366]/10 px-1.5 py-0.5 rounded">
+                Admin
+              </span>
+            )}
           </div>
           <div className="relative">
-            <button
-              onClick={() => setShowTenantDropdown(!showTenantDropdown)}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#202C33] hover:bg-[#222E35] border border-[#2A3942] text-left transition"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-[#00A884]/20 text-[#25D366] flex items-center justify-center font-bold text-xs flex-shrink-0">
-                  <Building2 className="w-4 h-4" />
+            {isZevaroneAdmin(currentUser) ? (
+              <button
+                onClick={() => setShowTenantDropdown(!showTenantDropdown)}
+                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#202C33] hover:bg-[#222E35] border border-[#2A3942] text-left transition"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-[#00A884]/20 text-[#25D366] flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-xs text-white truncate">
+                      {selectedTenant?.name || 'Select Business'}
+                    </p>
+                    <p className="text-[10px] text-[#8696A0] truncate flex items-center gap-1">
+                      <Phone className="w-2.5 h-2.5" />
+                      {selectedTenant?.whatsappNumber || 'No phone set'}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-xs text-white truncate">
-                    {selectedTenant?.name || 'Select Business'}
-                  </p>
-                  <p className="text-[10px] text-[#8696A0] truncate flex items-center gap-1">
-                    <Phone className="w-2.5 h-2.5" />
-                    {selectedTenant?.whatsappNumber || 'No phone set'}
-                  </p>
+                <ChevronDown className="w-4 h-4 text-[#8696A0] flex-shrink-0" />
+              </button>
+            ) : (
+              <div className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#202C33] border border-[#2A3942] text-left">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-[#00A884]/20 text-[#25D366] flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-xs text-white truncate">
+                      {selectedTenant?.name || currentUser?.businessName || 'My Workspace'}
+                    </p>
+                    <p className="text-[10px] text-[#8696A0] truncate flex items-center gap-1">
+                      <Phone className="w-2.5 h-2.5" />
+                      {selectedTenant?.whatsappNumber || 'Setup in Settings'}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <ChevronDown className="w-4 h-4 text-[#8696A0] flex-shrink-0" />
-            </button>
+            )}
 
-            {/* Dropdown Menu */}
-            {showTenantDropdown && (
+            {/* Dropdown Menu - Admins only */}
+            {isZevaroneAdmin(currentUser) && showTenantDropdown && (
               <div className="absolute left-0 right-0 top-full mt-1.5 z-30 bg-[#202C33] border border-[#2A3942] rounded-xl shadow-2xl overflow-hidden py-1">
                 <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-[#8696A0] border-b border-[#2A3942]">
                   Switch Business

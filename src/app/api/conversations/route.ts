@@ -11,12 +11,21 @@ import {
   clearAllConversations,
 } from '@/lib/store';
 import { sendWhatsAppTextMessage, sendWhatsAppImageMessage, formatPhoneNumber } from '@/lib/whatsapp';
+import { getSessionUser } from '@/lib/auth-server';
+import { isZevaroneAdmin } from '@/lib/types';
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getSessionUser(req);
+    const isAdmin = isZevaroneAdmin(user);
     const searchParams = req.nextUrl.searchParams;
     const phone = searchParams.get('phone');
-    const tenantId = searchParams.get('tenantId') || undefined;
+    let tenantId = searchParams.get('tenantId') || undefined;
+
+    // Isolate client workspace: non-admins can only see their own contacts
+    if (!isAdmin && user?.tenantId) {
+      tenantId = user.tenantId;
+    }
 
     const contacts = await getContacts(tenantId);
 
@@ -48,8 +57,13 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser(req);
+    const isAdmin = isZevaroneAdmin(user);
     const body = await req.json();
     const { phone, text, mode, action, tenantId, imageUrl, mediaId, mediaPreviewUrl } = body;
+
+    // Isolate client workspace
+    const effectiveTenantId = (!isAdmin && user?.tenantId) ? user.tenantId : tenantId;
 
     if (!phone) {
       return NextResponse.json(
@@ -59,18 +73,18 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanPhone = formatPhoneNumber(phone);
-    const tenant = tenantId ? await getTenant(tenantId) : undefined;
+    const tenant = effectiveTenantId ? await getTenant(effectiveTenantId) : undefined;
 
     // If updating human assistance status
     if (action === 'toggle_human') {
-      await setContactHumanAssistance(cleanPhone, Boolean(body.needsHumanAssistance), tenantId);
+      await setContactHumanAssistance(cleanPhone, Boolean(body.needsHumanAssistance), effectiveTenantId);
       return NextResponse.json({ success: true, needsHumanAssistance: Boolean(body.needsHumanAssistance) });
     }
 
     // If updating contact mode or metadata
     if (action === 'update_mode' && mode) {
       const updated = await upsertContact({
-        tenantId,
+        tenantId: effectiveTenantId,
         phone: cleanPhone,
         mode,
       });
@@ -147,9 +161,16 @@ export async function POST(req: NextRequest) {
  */
 export async function DELETE(req: NextRequest) {
   try {
+    const user = await getSessionUser(req);
+    const isAdmin = isZevaroneAdmin(user);
     const searchParams = req.nextUrl.searchParams;
     let phone = searchParams.get('phone');
     let tenantId = searchParams.get('tenantId') || undefined;
+
+    // Enforce tenant isolation
+    if (!isAdmin && user?.tenantId) {
+      tenantId = user.tenantId;
+    }
     const clearAll = searchParams.get('clearAll') === 'true';
 
     // If clearing all conversations for this tenant

@@ -8,10 +8,13 @@ import {
 } from '@/lib/store';
 import { sendWhatsAppTextMessage, sendWhatsAppTemplateMessage, sendWhatsAppImageMessage, formatPhoneNumber } from '@/lib/whatsapp';
 import { generateGeminiReply } from '@/lib/gemini';
-import { BotMode } from '@/lib/types';
+import { BotMode, isZevaroneAdmin } from '@/lib/types';
+import { getSessionUser } from '@/lib/auth-server';
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser(req);
+    const isAdmin = isZevaroneAdmin(user);
     const body = await req.json();
     const {
       phone,
@@ -25,6 +28,8 @@ export async function POST(req: NextRequest) {
       tenantId,
     } = body;
 
+    const effectiveTenantId = (!isAdmin && user?.tenantId) ? user.tenantId : tenantId;
+
     if (!phone) {
       return NextResponse.json(
         { success: false, error: 'Phone number is required.' },
@@ -35,7 +40,7 @@ export async function POST(req: NextRequest) {
     const cleanPhone = formatPhoneNumber(phone);
     const settings = await getSettings();
     const tenants = await getTenants();
-    const tenant = (tenantId ? await getTenant(tenantId) : null) || tenants[0];
+    const tenant = (effectiveTenantId ? await getTenant(effectiveTenantId) : null) || tenants[0];
 
     const mode: BotMode = chosenMode || tenant?.defaultMode || settings.defaultMode;
 

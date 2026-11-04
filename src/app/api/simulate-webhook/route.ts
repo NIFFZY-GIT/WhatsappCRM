@@ -11,6 +11,7 @@ import {
 } from '@/lib/store';
 import { generateGeminiReply } from '@/lib/gemini';
 import { formatPhoneNumber } from '@/lib/whatsapp';
+import { checkAdminAuth } from '@/lib/auth-server';
 
 /**
  * Simulator Endpoint:
@@ -19,6 +20,14 @@ import { formatPhoneNumber } from '@/lib/whatsapp';
  */
 export async function POST(req: NextRequest) {
   try {
+    const auth = await checkAdminAuth(req);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { success: false, error: 'Offline simulator is restricted to administrators' },
+        { status: 403 }
+      );
+    }
+
     const { phone, message, name, tenantId } = await req.json();
 
     if (!phone || !message) {

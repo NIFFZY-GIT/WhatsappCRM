@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { overrideClientSubscription, getUserById, getUserByEmail } from '@/lib/store';
-import { isZevaroneAdmin } from '@/lib/types';
+import { overrideClientSubscription } from '@/lib/store';
+import { checkAdminAuth } from '@/lib/auth-server';
 
 export async function POST(req: NextRequest) {
   try {
-    const token = req.cookies.get('crm_auth_token')?.value;
-    let currentUser = null;
-
-    if (token) {
-      try {
-        const decoded = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));
-        if (decoded.id) currentUser = await getUserById(decoded.id);
-        if (!currentUser && decoded.email) currentUser = await getUserByEmail(decoded.email);
-      } catch (e) {}
+    const auth = await checkAdminAuth(req);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Admin access required' },
+        { status: auth.status || 403 }
+      );
     }
 
     const body = await req.json();

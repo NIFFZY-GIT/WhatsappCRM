@@ -166,6 +166,27 @@ export default function AdminMonitorPage() {
     return matchesSearch && matchesStatus;
   });
 
+  if (currentUser && !isZevaroneAdmin(currentUser)) {
+    return (
+      <div className="max-w-xl mx-auto py-16 px-4 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-[#111B21] mb-2">Zevarone Super Admin Access Required</h2>
+        <p className="text-sm text-[#667781] mb-6 leading-relaxed">
+          The Super Admin Monitor is reserved for authorized Zevarone personnel (@zevarone.com). Your account (<span className="text-[#111B21] font-semibold">{currentUser.email}</span>) does not have master monitoring permissions.
+        </p>
+        <Link
+          href="/inbox"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#008069] hover:bg-[#075E54] text-white font-semibold text-xs rounded-xl transition shadow-xs"
+        >
+          Return to Your Inbox
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans text-slate-900">
       {/* Top Header */}
@@ -214,27 +235,6 @@ export default function AdminMonitorPage() {
           </button>
         </div>
       </div>
-
-      {/* Admin Privilege Notification Banner */}
-      {!isAdmin && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start justify-between gap-4 text-xs text-amber-900">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold">Super Admin Notice:</span>
-              <p className="mt-0.5 text-amber-800">
-                You are currently viewing this monitor in preview mode. To unlock master modification privileges, log in with an authorized <strong>@zevarone.com</strong> enterprise email.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/login"
-            className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs transition shrink-0"
-          >
-            Switch to @zevarone.com Admin
-          </Link>
-        </div>
-      )}
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

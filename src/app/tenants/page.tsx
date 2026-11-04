@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   Building2,
   Plus,
@@ -9,8 +10,10 @@ import {
   Phone,
   Sparkles,
   Zap,
+  ShieldAlert,
+  ArrowRight,
 } from 'lucide-react';
-import { BotMode } from '@/lib/types';
+import { BotMode, isZevaroneAdmin } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 
@@ -22,6 +25,7 @@ export default function TenantsPage() {
     switchTenant,
     refreshData,
     notify,
+    currentUser,
   } = useApp();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -116,6 +120,27 @@ export default function TenantsPage() {
       });
     }
   };
+
+  if (currentUser && !isZevaroneAdmin(currentUser)) {
+    return (
+      <div className="max-w-xl mx-auto py-16 px-4 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-[#111B21] mb-2">Zevarone Admin Access Required</h2>
+        <p className="text-sm text-[#667781] mb-6 leading-relaxed">
+          The Multi-Client Business Directory is restricted to authorized Zevarone administrators. Your account (<span className="text-[#111B21] font-semibold">{currentUser.email}</span>) does not have master administrative permissions.
+        </p>
+        <Link
+          href="/inbox"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#008069] hover:bg-[#075E54] text-white font-semibold text-xs rounded-xl transition shadow-xs"
+        >
+          Return to Your Inbox
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

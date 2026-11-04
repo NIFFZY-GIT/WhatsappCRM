@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getContacts, getTenant } from '@/lib/store';
+import { getSessionUser } from '@/lib/auth-server';
+import { isZevaroneAdmin } from '@/lib/types';
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getSessionUser(req);
+    const isAdmin = isZevaroneAdmin(user);
     const { searchParams } = new URL(req.url);
-    const tenantId = searchParams.get('tenantId') || undefined;
+    let tenantId = searchParams.get('tenantId') || undefined;
+
+    // Security check: non-admins can only export their own workspace contacts
+    if (!isAdmin) {
+      if (!user) {
+        return NextResponse.json({ success: false, error: 'Sign in required' }, { status: 401 });
+      }
+      tenantId = user.tenantId;
+    }
 
     const contacts = await getContacts(tenantId);
     let tenantName = 'All Workspaces';

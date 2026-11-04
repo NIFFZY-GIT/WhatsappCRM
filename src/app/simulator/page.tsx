@@ -10,11 +10,13 @@ import {
   User,
   ArrowRight,
   MessageSquare,
+  ShieldAlert,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { isZevaroneAdmin } from '@/lib/types';
 
 export default function SimulatorPage() {
-  const { selectedTenant, refreshData, notify } = useApp();
+  const { selectedTenant, refreshData, notify, currentUser } = useApp();
 
   const [simPhone, setSimPhone] = useState('94772284950');
   const [simName, setSimName] = useState('Priya Sharma');
@@ -77,6 +79,27 @@ export default function SimulatorPage() {
       setIsSimulating(false);
     }
   };
+
+  if (currentUser && !isZevaroneAdmin(currentUser)) {
+    return (
+      <div className="max-w-xl mx-auto py-16 px-4 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-[#111B21] mb-2">Zevarone Admin Access Required</h2>
+        <p className="text-sm text-[#667781] mb-6 leading-relaxed">
+          The Webhook &amp; AI Diagnostic Simulator is restricted to Zevarone administrators.
+        </p>
+        <Link
+          href="/inbox"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#008069] hover:bg-[#075E54] text-white font-semibold text-xs rounded-xl transition shadow-xs"
+        >
+          Return to Your Inbox
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

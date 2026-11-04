@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getClientWorkspacesSummary, getUserById, getUserByEmail } from '@/lib/store';
-import { isZevaroneAdmin } from '@/lib/types';
+import { getClientWorkspacesSummary } from '@/lib/store';
+import { checkAdminAuth } from '@/lib/auth-server';
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get('crm_auth_token')?.value;
-    let currentUser = null;
-
-    if (token) {
-      try {
-        const decoded = JSON.parse(Buffer.from(token, 'base64').toString('utf-8'));
-        if (decoded.id) currentUser = await getUserById(decoded.id);
-        if (!currentUser && decoded.email) currentUser = await getUserByEmail(decoded.email);
-      } catch (e) {}
+    const auth = await checkAdminAuth(req);
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { success: false, error: auth.error || 'Admin access required' },
+        { status: auth.status || 403 }
+      );
     }
-
-    // Check if requester has Zevarone admin rights
-    const isAdmin = isZevaroneAdmin(currentUser);
 
     const workspaces = await getClientWorkspacesSummary();
 
@@ -32,13 +26,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      isAdmin,
-      currentUser: currentUser
+      isAdmin: true,
+      currentUser: auth.user
         ? {
-            id: currentUser.id,
-            email: currentUser.email,
-            name: currentUser.name,
-            role: currentUser.role,
+            id: auth.user.id,
+            email: auth.user.email,
+            name: auth.user.name,
+            role: auth.user.role,
           }
         : null,
       kpis: {

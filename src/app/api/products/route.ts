@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProducts, upsertProduct, deleteProduct } from '@/lib/store';
+import { getSessionUser } from '@/lib/auth-server';
+import { isZevaroneAdmin } from '@/lib/types';
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getSessionUser(req);
+    const isAdmin = isZevaroneAdmin(user);
     const searchParams = req.nextUrl.searchParams;
-    const tenantId = searchParams.get('tenantId') || undefined;
+    let tenantId = searchParams.get('tenantId') || undefined;
+
+    if (!isAdmin && user?.tenantId) {
+      tenantId = user.tenantId;
+    }
 
     const products = await getProducts(tenantId);
     return NextResponse.json({ success: true, products });
@@ -18,8 +26,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getSessionUser(req);
+    const isAdmin = isZevaroneAdmin(user);
     const body = await req.json();
-    const { tenantId, name, price, category, description, inStock, id } = body;
+    let { tenantId, name, price, category, description, inStock, id } = body;
+
+    if (!isAdmin && user?.tenantId) {
+      tenantId = user.tenantId;
+    }
 
     if (!tenantId || !name || !price) {
       return NextResponse.json(

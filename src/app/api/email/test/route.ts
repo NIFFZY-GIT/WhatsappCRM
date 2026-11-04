@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySmtpConnection, sendEmail, sendWelcomeEmail } from '@/lib/email';
+import { checkAdminAuth } from '@/lib/auth-server';
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await checkAdminAuth(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+    }
+
     const status = await verifySmtpConnection();
     return NextResponse.json({
       success: status.success,
@@ -20,6 +26,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await checkAdminAuth(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+    }
+
     const body = await req.json();
     const { to = 'no-reply@zevarone.com', name = 'Test User', type = 'test' } = body;
 
