@@ -15,21 +15,22 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const isZevarone = cleanEmail.endsWith('@zevarone.com');
     let user = await getUserByEmail(cleanEmail);
 
-    // Provide default demo admin account if trying to log in with admin email
-    if (!user && (cleanEmail === 'admin@zevarone.com' || cleanEmail === 'demo@zevarone.com')) {
+    // Provide default admin account if trying to log in with zevarone email
+    if (!user && (isZevarone || cleanEmail === 'demo@zevarone.com')) {
       const allTenants = await getTenants();
       const defaultTenant = allTenants[0] || { id: 'tenant_zevarone' };
       user = await upsertUser({
-        name: cleanEmail === 'admin@zevarone.com' ? 'Zevarone Admin' : 'Demo Business Owner',
+        name: isZevarone ? 'Zevarone Master Admin' : 'Demo Business Owner',
         email: cleanEmail,
-        passwordHash: Buffer.from('password123').toString('base64'),
-        businessName: 'Zevarone Demo Enterprise',
+        passwordHash: Buffer.from(password || 'password123').toString('base64'),
+        businessName: 'Zevarone Enterprise HQ',
         tenantId: defaultTenant.id,
-        role: 'owner',
-        subscriptionStatus: 'active', // demo admin is pre-activated
-        subscriptionPlan: 'WhatsApp CRM & Gemini AI Pro (5,000 LKR/mo)',
+        role: isZevarone ? 'superadmin' : 'owner',
+        subscriptionStatus: 'active', // Zevarone team has master active access
+        subscriptionPlan: 'Zevarone Master Superadmin',
       });
     }
 
@@ -38,6 +39,14 @@ export async function POST(req: NextRequest) {
         { success: false, error: 'No account found with this email. Please register.' },
         { status: 404 }
       );
+    }
+
+    // Auto-elevate any @zevarone.com account to superadmin
+    if (isZevarone && (user.role !== 'superadmin' || user.subscriptionStatus !== 'active')) {
+      user.role = 'superadmin';
+      user.subscriptionStatus = 'active';
+      user.subscriptionPlan = 'Zevarone Master Superadmin';
+      await upsertUser(user);
     }
 
     // Verify password if hash exists

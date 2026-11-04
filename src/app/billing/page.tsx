@@ -20,6 +20,9 @@ import {
   Loader2,
   ExternalLink,
   RefreshCw,
+  Calendar,
+  Check,
+  Tag,
 } from 'lucide-react';
 
 function BillingContent() {
@@ -27,6 +30,7 @@ function BillingContent() {
   const searchParams = useSearchParams();
   const { currentUser, selectedTenant, notify, refreshData, isProUser } = useApp();
 
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('annual');
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [successBanner, setSuccessBanner] = useState(false);
@@ -37,6 +41,7 @@ function BillingContent() {
     const isSuccess = searchParams.get('success') === 'true';
     const isDemo = searchParams.get('demo') === 'true';
     const sessionId = searchParams.get('session_id');
+    const intervalParam = (searchParams.get('interval') as 'monthly' | 'annual') || 'monthly';
 
     if (isSuccess) {
       setVerifying(true);
@@ -46,6 +51,7 @@ function BillingContent() {
         body: JSON.stringify({
           sessionId,
           isDemo,
+          interval: intervalParam,
           email: currentUser?.email,
           userId: currentUser?.id,
         }),
@@ -54,11 +60,14 @@ function BillingContent() {
         .then(async (data) => {
           if (data.success) {
             setSuccessBanner(true);
-            setStatusMessage('Payment confirmed! Your 5,000 LKR Pro Subscription is now Active.');
+            setStatusMessage(
+              data.message ||
+                `Payment confirmed! Your ${intervalParam === 'annual' ? 'Annual (4,500 LKR/mo)' : 'Monthly (5,000 LKR/mo)'} Pro Subscription is now Active.`
+            );
             notify({
               type: 'success',
               title: 'Pro Subscription Activated! 🎉',
-              message: 'Full access to your WhatsApp CRM and Gemini AI concierge has been unlocked.',
+              message: `Full access to your WhatsApp CRM and Gemini AI concierge has been unlocked.`,
             });
             await refreshData();
           }
@@ -87,13 +96,16 @@ function BillingContent() {
           body: JSON.stringify({
             isDemo: true,
             email,
+            interval: billingInterval,
             userId: currentUser?.id,
           }),
         });
         const data = await res.json();
         if (data.success) {
           setSuccessBanner(true);
-          setStatusMessage('Test activation successful! 5,000 LKR Pro tier unlocked.');
+          setStatusMessage(
+            `Test activation successful! ${billingInterval === 'annual' ? 'Annual (4,500 LKR/mo)' : 'Monthly (5,000 LKR/mo)'} Pro tier unlocked.`
+          );
           notify({
             type: 'success',
             title: 'Pro Unlocked (Test Mode)',
@@ -112,6 +124,7 @@ function BillingContent() {
           userId: currentUser?.id,
           tenantId: tenantId,
           customerName: name,
+          billingInterval,
         }),
       });
 
@@ -121,10 +134,8 @@ function BillingContent() {
       }
 
       if (data.url) {
-        // Redirect to real Stripe Checkout hosted page
         window.location.href = data.url;
       } else if (data.isDemo && data.demoSuccessUrl) {
-        // Redirect to demo confirmation URL
         window.location.href = data.demoSuccessUrl;
       }
     } catch (err: any) {
@@ -139,16 +150,19 @@ function BillingContent() {
   };
 
   const isActive = currentUser ? currentUser.subscriptionStatus === 'active' : true;
+  const isAnnual = billingInterval === 'annual';
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+    <div className="space-y-6 max-w-5xl mx-auto pb-12 font-sans text-slate-900">
       {/* Top Banner / Verification status */}
       {verifying && (
         <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 flex items-center gap-3">
           <Loader2 className="w-5 h-5 animate-spin shrink-0 text-blue-600" />
           <div className="text-sm">
             <span className="font-semibold">Verifying your Stripe transaction...</span>
-            <p className="text-xs text-blue-700 mt-0.5">Please wait while we confirm your 5,000 LKR subscription.</p>
+            <p className="text-xs text-blue-700 mt-0.5">
+              Please wait while we confirm your WhatsApp CRM subscription.
+            </p>
           </div>
         </div>
       )}
@@ -158,8 +172,8 @@ function BillingContent() {
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-6 h-6 shrink-0 text-[#00A884]" />
             <div>
-              <h4 className="text-sm font-bold text-[#111B21]">Subscription Active & Verified!</h4>
-              <p className="text-xs text-[#54656F]">{statusMessage}</p>
+              <h4 className="text-sm font-bold text-slate-900">Subscription Active & Verified!</h4>
+              <p className="text-xs text-slate-600">{statusMessage}</p>
             </div>
           </div>
           <Link
@@ -173,74 +187,121 @@ function BillingContent() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#E9EDEF] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold text-[#111B21]">Billing & Subscription</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Billing & Subscription</h1>
             <span
               className={`px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide ${
                 isActive
-                  ? 'bg-[#E8F5E9] text-[#008069] border border-[#C8E6C9]'
+                  ? 'bg-emerald-50 text-[#008069] border border-emerald-200'
                   : 'bg-amber-50 text-amber-800 border border-amber-200'
               }`}
             >
               {isActive ? '● PRO ACTIVE' : '○ PAYMENT REQUIRED'}
             </span>
           </div>
-          <p className="text-xs text-[#54656F]">
+          <p className="text-xs text-slate-500">
             Manage your WhatsApp Business SaaS license and recurring Stripe billing.
           </p>
         </div>
 
         {currentUser ? (
-          <div className="bg-white border border-[#E9EDEF] px-3.5 py-2 rounded-xl flex items-center gap-3">
+          <div className="bg-white border border-slate-200 px-3.5 py-2 rounded-xl flex items-center gap-3 shadow-xs">
             <div className="h-9 w-9 rounded-full bg-[#111B21] text-white flex items-center justify-center font-bold text-xs">
               {currentUser.name.charAt(0).toUpperCase()}
             </div>
             <div className="text-left text-xs">
-              <div className="font-semibold text-[#111B21]">{currentUser.name}</div>
-              <div className="text-[#54656F] text-[11px]">{currentUser.businessName}</div>
+              <div className="font-semibold text-slate-900">{currentUser.name}</div>
+              <div className="text-slate-500 text-[11px]">{currentUser.businessName}</div>
             </div>
           </div>
         ) : (
           <Link
             href="/login"
-            className="px-3.5 py-2 rounded-lg border border-[#008069] text-[#008069] text-xs font-semibold hover:bg-[#E8F5E9] transition flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-lg border border-[#008069] text-[#008069] text-xs font-semibold hover:bg-emerald-50 transition flex items-center gap-1.5"
           >
             Sign in to Your Business Account
           </Link>
         )}
       </div>
 
+      {/* Billing Interval Toggle (Monthly vs Annual Discount) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200 p-4 rounded-2xl shadow-xs">
+        <div>
+          <span className="text-xs font-bold text-slate-900 block">Choose Your Billing Cycle</span>
+          <span className="text-[11px] text-slate-500">
+            Annual billing saves 6,000 LKR per year (Discounted to 4,500 LKR/month).
+          </span>
+        </div>
+
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setBillingInterval('monthly')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+              billingInterval === 'monthly'
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            Monthly (5,000 LKR)
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingInterval('annual')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+              billingInterval === 'annual'
+                ? 'bg-[#008069] text-white shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <span>Annual (4,500 LKR/mo)</span>
+            <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-100 text-emerald-900 font-extrabold uppercase">
+              Save 10%
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* Pricing & Plan Card Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Plan Details & Action */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white border border-[#E9EDEF] rounded-2xl p-6 shadow-sm">
+          <div className="bg-white border-2 border-emerald-600/60 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+            {isAnnual && (
+              <div className="absolute top-0 right-0 bg-[#008069] text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+                ANNUAL DISCOUNT ACTIVE (SAVE 6,000 LKR)
+              </div>
+            )}
+
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#008069] bg-[#E8F5E9] px-2.5 py-1 rounded-md">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#008069] bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
                   ZEVARONE ENTERPRISE TIER
                 </span>
-                <h2 className="text-xl font-bold text-[#111B21] mt-2">
+                <h2 className="text-xl font-bold text-slate-900 mt-2">
                   WhatsApp CRM & Gemini AI Pro
                 </h2>
-                <p className="text-xs text-[#54656F] mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Complete omnichannel customer engagement platform for businesses in Sri Lanka & worldwide.
                 </p>
               </div>
 
               <div className="text-right">
-                <div className="text-3xl font-extrabold text-[#111B21]">
-                  5,000 <span className="text-sm font-semibold text-[#54656F]">LKR</span>
+                <div className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+                  {isAnnual ? '4,500' : '5,000'}{' '}
+                  <span className="text-sm font-semibold text-slate-500">LKR</span>
                 </div>
-                <div className="text-[11px] text-[#8696A0]">per business / month</div>
+                <div className="text-[11px] text-slate-400">
+                  {isAnnual ? 'per month (billed 54,000 LKR / year)' : 'per business / month'}
+                </div>
               </div>
             </div>
 
-            <div className="mt-6 pt-6 border-t border-[#E9EDEF]">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#54656F] mb-4">
-                What's Included in Your 5,000 LKR Plan:
+            <div className="mt-6 pt-6 border-t border-slate-200">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4">
+                Everything Included in Your Plan:
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -276,13 +337,13 @@ function BillingContent() {
                     desc: 'Enterprise uptime, Meta Cloud API compliance, and 24/7 reliability.',
                   },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-[#F0F2F5] border border-[#E9EDEF]">
-                    <div className="p-2 rounded-lg bg-white text-[#008069] shrink-0 shadow-xs">
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div className="p-2 rounded-lg bg-white text-[#008069] shrink-0 shadow-2xs">
                       <item.icon className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-[#111B21]">{item.title}</div>
-                      <div className="text-[11px] text-[#54656F] mt-0.5 leading-snug">{item.desc}</div>
+                      <div className="text-xs font-bold text-slate-900">{item.title}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">{item.desc}</div>
                     </div>
                   </div>
                 ))}
@@ -290,12 +351,12 @@ function BillingContent() {
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-6 pt-6 border-t border-[#E9EDEF] flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="text-xs text-[#54656F]">
+            <div className="mt-6 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-xs text-slate-500">
                 {isActive ? (
                   <span className="flex items-center gap-1.5 text-[#008069] font-medium">
                     <CheckCircle2 className="w-4 h-4" />
-                    Your subscription is currently active.
+                    Subscription active ({currentUser?.billingInterval === 'annual' ? 'Annual Tier' : 'Monthly Tier'}).
                   </span>
                 ) : (
                   <span className="flex items-center gap-1.5 text-amber-700 font-medium">
@@ -317,7 +378,7 @@ function BillingContent() {
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4" />
-                      {isActive ? 'Renew / Update Card (Stripe)' : 'Pay 5,000 LKR with Stripe'}
+                      {isAnnual ? 'Pay 54,000 LKR (Annual - Save 10%)' : 'Pay 5,000 LKR (Monthly)'}
                     </>
                   )}
                 </button>
@@ -328,10 +389,10 @@ function BillingContent() {
                   onClick={() => handlePayWithStripe(true)}
                   disabled={loading}
                   title="Simulate instant payment for test/demo environments"
-                  className="px-3.5 py-2.5 bg-white border border-[#E9EDEF] text-[#54656F] hover:text-[#111B21] hover:bg-[#F0F2F5] text-xs font-semibold rounded-xl transition flex items-center gap-1.5"
+                  className="px-3.5 py-2.5 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 text-xs font-semibold rounded-xl transition flex items-center gap-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#008069]" />
-                  Simulate Payment
+                  Simulate {isAnnual ? 'Annual' : 'Monthly'}
                 </button>
               </div>
             </div>
@@ -341,43 +402,47 @@ function BillingContent() {
         {/* Right Col: Account & Payment Info */}
         <div className="space-y-6">
           {/* Card: Payment Security */}
-          <div className="bg-white border border-[#E9EDEF] rounded-2xl p-5 shadow-sm space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#111B21] flex items-center gap-2">
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#008069]" />
               Stripe Verified Security
             </h3>
-            <p className="text-xs text-[#54656F] leading-relaxed">
+            <p className="text-xs text-slate-500 leading-relaxed">
               Payments are securely encrypted and processed directly by Stripe. Zevarone never stores your credit card details.
             </p>
-            <div className="p-3 bg-[#F0F2F5] rounded-xl border border-[#E9EDEF] space-y-2 text-xs">
-              <div className="flex justify-between text-[#54656F]">
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
+              <div className="flex justify-between text-slate-600">
                 <span>Currency:</span>
-                <span className="font-semibold text-[#111B21]">LKR (Sri Lankan Rupee)</span>
+                <span className="font-semibold text-slate-900">LKR (Sri Lankan Rupee)</span>
               </div>
-              <div className="flex justify-between text-[#54656F]">
-                <span>Billing Interval:</span>
-                <span className="font-semibold text-[#111B21]">Monthly (Recurring)</span>
+              <div className="flex justify-between text-slate-600">
+                <span>Annual Discount:</span>
+                <span className="font-semibold text-emerald-700">4,500 LKR/mo (10% OFF)</span>
               </div>
-              <div className="flex justify-between text-[#54656F]">
-                <span>Payment Gate:</span>
-                <span className="font-semibold text-[#111B21]">Stripe Hosted Checkout</span>
+              <div className="flex justify-between text-slate-600">
+                <span>Monthly Rate:</span>
+                <span className="font-semibold text-slate-900">5,000 LKR/mo</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Gateway:</span>
+                <span className="font-semibold text-slate-900">Stripe Hosted Checkout</span>
               </div>
             </div>
           </div>
 
           {/* Current Workspace Info */}
-          <div className="bg-white border border-[#E9EDEF] rounded-2xl p-5 shadow-sm space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#111B21]">
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
               Active Business Workspace
             </h3>
-            <div className="p-3 bg-[#F0F2F5] rounded-xl border border-[#E9EDEF]">
-              <div className="font-bold text-xs text-[#111B21]">
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="font-bold text-xs text-slate-900">
                 {selectedTenant?.name || 'Zevarone Demo Business'}
               </div>
-              <div className="text-[11px] text-[#54656F] mt-0.5">
+              <div className="text-[11px] text-slate-500 mt-0.5">
                 ID: {selectedTenant?.id || 'tenant_zevarone'}
               </div>
-              <div className="text-[11px] text-[#54656F]">
+              <div className="text-[11px] text-slate-500">
                 WhatsApp: +{selectedTenant?.whatsappNumber || '94771234567'}
               </div>
             </div>

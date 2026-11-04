@@ -31,6 +31,7 @@ import {
 export default function LandingPage() {
   const { currentUser } = useApp();
   const [activeTab, setActiveTab] = useState<'ai' | 'media' | 'inbox' | 'broadcast'>('ai');
+  const [pricingInterval, setPricingInterval] = useState<'monthly' | 'annual'>('annual');
 
   return (
     <div className="min-h-screen bg-[#FAFBFB] text-slate-900 flex flex-col font-sans selection:bg-[#008069] selection:text-white">
@@ -654,7 +655,7 @@ export default function LandingPage() {
       ========================================================================= */}
       <section id="pricing" className="py-20 bg-white border-t border-slate-200 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="text-center max-w-3xl mx-auto mb-10">
             <span className="text-xs font-bold uppercase tracking-wider text-[#008069] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
               SIMPLE &amp; TRANSPARENT
             </span>
@@ -662,18 +663,47 @@ export default function LandingPage() {
               One Plan. All Enterprise Features Included.
             </h2>
             <p className="text-sm text-slate-600 mt-2.5">
-              No hidden platform fees. No per-user penalties. Just 5,000 LKR/month.
+              Choose monthly billing or save 10% with annual subscription (4,500 LKR/month).
             </p>
+
+            {/* Monthly / Annual Toggle */}
+            <div className="mt-7 inline-flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setPricingInterval('monthly')}
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition ${
+                  pricingInterval === 'monthly'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                Monthly (5,000 LKR)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPricingInterval('annual')}
+                className={`px-5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  pricingInterval === 'annual'
+                    ? 'bg-[#008069] text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <span>Annual (4,500 LKR/mo)</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-200 text-emerald-950 font-extrabold">
+                  SAVE 10%
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="max-w-lg mx-auto bg-white border-2 border-[#008069] rounded-3xl p-8 shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 bg-[#008069] text-white text-[11px] font-bold px-4 py-1.5 rounded-bl-xl uppercase tracking-wider">
-              ENTERPRISE PRO
+              {pricingInterval === 'annual' ? 'ANNUAL DISCOUNT (SAVE 6,000 LKR)' : 'ENTERPRISE PRO'}
             </div>
 
             <div className="space-y-2">
               <span className="text-xs font-bold uppercase tracking-wider text-[#008069]">
-                MONTHLY SUBSCRIPTION
+                {pricingInterval === 'annual' ? 'ANNUAL SUBSCRIPTION' : 'MONTHLY SUBSCRIPTION'}
               </span>
               <h3 className="text-2xl font-black text-slate-900">WhatsApp CRM &amp; Gemini Pro</h3>
               <p className="text-xs text-slate-500">
@@ -682,9 +712,15 @@ export default function LandingPage() {
             </div>
 
             <div className="my-6 pt-6 border-t border-slate-200 flex items-baseline gap-2">
-              <span className="text-5xl font-black text-slate-900">5,000</span>
+              <span className="text-5xl font-black text-slate-900">
+                {pricingInterval === 'annual' ? '4,500' : '5,000'}
+              </span>
               <span className="text-base font-bold text-slate-500">LKR</span>
-              <span className="text-xs text-slate-400">/ business / month</span>
+              <span className="text-xs text-slate-400">
+                {pricingInterval === 'annual'
+                  ? '/ month (billed 54,000 LKR / year)'
+                  : '/ business / month'}
+              </span>
             </div>
 
             {/* Checklist */}
@@ -696,6 +732,7 @@ export default function LandingPage() {
                 'Interactive Product Catalog & WhatsApp Orders',
                 'Bulk Outbound Broadcast Campaign Messenger',
                 'Meta Official Cloud API Integration',
+                'Export All Customers & Leads to Excel / CSV',
                 'Dedicated Multi-Tenant Workspace & Database',
                 'Stripe Secure Automated Recurring Billing',
                 'Zevarone 99.9% Uptime Guarantee & SLA',
@@ -712,7 +749,7 @@ export default function LandingPage() {
                 href="/login"
                 className="w-full py-3.5 bg-[#008069] hover:bg-[#075E54] text-white font-bold text-sm rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
               >
-                Get Started for 5,000 LKR
+                Get Started for {pricingInterval === 'annual' ? '4,500 LKR/mo' : '5,000 LKR/mo'}
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <div className="text-center">

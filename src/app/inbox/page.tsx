@@ -18,6 +18,8 @@ import {
   ZoomIn,
   Link as LinkIcon,
   Loader2,
+  Download,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Contact, ChatMessage, BotMode } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
@@ -582,13 +584,26 @@ export default function InboxPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => selectedTenant && loadContacts(selectedTenant.id, false)}
-          className="px-3 py-1.5 rounded-xl border border-[#E9EDEF] bg-white hover:bg-[#F0F2F5] text-[#111B21] text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto transition cursor-pointer"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-[#667781]" />
-          Manual Sync
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          {/* Export to Excel Spreadsheet */}
+          <a
+            href={`/api/contacts/export${selectedTenant ? `?tenantId=${selectedTenant.id}` : ''}`}
+            download
+            className="px-3.5 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-[#008069] text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+            title="Download all customer contacts as an Excel CSV spreadsheet"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export to Excel</span>
+          </a>
+
+          <button
+            onClick={() => selectedTenant && loadContacts(selectedTenant.id, false)}
+            className="px-3 py-1.5 rounded-xl border border-[#E9EDEF] bg-white hover:bg-[#F0F2F5] text-[#111B21] text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-[#667781]" />
+            Manual Sync
+          </button>
+        </div>
       </div>
 
       {/* Main Inbox Card Container */}

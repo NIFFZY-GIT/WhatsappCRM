@@ -5,7 +5,7 @@ import { getTenant } from '@/lib/store';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userEmail, userId, tenantId, customerName } = body;
+    const { userEmail, userId, tenantId, customerName, billingInterval = 'monthly' } = body;
 
     if (!userEmail) {
       return NextResponse.json(
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         success: true,
         isDemo: true,
         message: 'Stripe API key is not configured in .env yet. Use mock checkout to preview.',
-        demoSuccessUrl: `${appUrl}/billing?success=true&demo=true&tenantId=${tenantId || 'tenant_zevarone'}`,
+        demoSuccessUrl: `${appUrl}/billing?success=true&demo=true&interval=${billingInterval}&tenantId=${tenantId || 'tenant_zevarone'}`,
       });
     }
 
@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
       userId,
       tenantId,
       customerName,
-      successUrl: `${appUrl}/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      billingInterval,
+      successUrl: `${appUrl}/billing?success=true&session_id={CHECKOUT_SESSION_ID}&interval=${billingInterval}`,
       cancelUrl: `${appUrl}/billing?canceled=true`,
     });
 

@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
 
     await upsertTenant(newTenant);
 
-    // 2. Create User Account (inactive subscription until 5000 LKR paid)
+    // 2. Create User Account (inactive subscription until 5000 LKR paid, unless @zevarone.com admin)
+    const isZevarone = cleanEmail.endsWith('@zevarone.com');
     const newUser: UserAccount = {
       id: 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       name: name.trim(),
@@ -55,9 +56,11 @@ export async function POST(req: NextRequest) {
       passwordHash: Buffer.from(password).toString('base64'),
       businessName: bName,
       tenantId: tenantId,
-      role: 'owner',
-      subscriptionStatus: 'inactive', // Requires 5,000 LKR Stripe subscription
-      subscriptionPlan: 'WhatsApp CRM & Gemini AI Pro (5,000 LKR/mo)',
+      role: isZevarone ? 'superadmin' : 'owner',
+      subscriptionStatus: isZevarone ? 'active' : 'inactive', // Zevarone team is pre-active
+      subscriptionPlan: isZevarone
+        ? 'Zevarone Master Superadmin'
+        : 'WhatsApp CRM & Gemini AI Pro (5,000 LKR/mo)',
       createdAt: new Date().toISOString(),
     };
 

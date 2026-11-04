@@ -825,7 +825,13 @@ export async function upsertUser(user: Partial<UserAccount> & { email: string; n
 export async function updateUserSubscription(
   userIdOrEmail: string,
   status: 'active' | 'inactive' | 'trial',
-  stripeData?: { customerId?: string; sessionId?: string; plan?: string }
+  stripeData?: {
+    customerId?: string;
+    sessionId?: string;
+    plan?: string;
+    billingInterval?: 'monthly' | 'annual';
+    subscriptionExpiresAt?: string;
+  }
 ): Promise<UserAccount | undefined> {
   const local = ensureLocalStore();
   if (!local.users) local.users = [];
@@ -839,8 +845,64 @@ export async function updateUserSubscription(
     if (stripeData?.customerId) local.users[idx].stripeCustomerId = stripeData.customerId;
     if (stripeData?.sessionId) local.users[idx].stripeSessionId = stripeData.sessionId;
     if (stripeData?.plan) local.users[idx].subscriptionPlan = stripeData.plan;
+    if (stripeData?.billingInterval) local.users[idx].billingInterval = stripeData.billingInterval;
+    if (stripeData?.subscriptionExpiresAt) local.users[idx].subscriptionExpiresAt = stripeData.subscriptionExpiresAt;
     saveLocalStore(local);
     return local.users[idx];
   }
   return undefined;
+}
+
+/* ==================== ZEVARONE MASTER ADMIN MONITORING ==================== */
+
+export async function getClientWorkspacesSummary() {
+  const tenants = await getTenants();
+  const users = await getUsers();
+  const allContacts = await getContacts();
+  const local = ensureLocalStore();
+  const allMessages = local.messages || [];
+
+  return tenants.map((tenant) => {
+    // Find tenant owner
+    const owner = users.find((u) => u.tenantId === tenant.id);
+    const tenantContacts = allContacts.filter((c) => c.tenantId === tenant.id);
+    const tenantMessages = allMessages.filter((m) => m.tenantId === tenant.id);
+    const aiHandled = tenantMessages.filter((m) => m.sender === 'bot').length;
+    const humanHandled = tenantMessages.filter((m) => m.sender === 'agent').length;
+
+    // Last activity
+    let lastActivityAt = tenant.createdAt;
+    if (tenantMessages.length > 0) {
+      const sorted = [...tenantMessages].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      lastActivityAt = sorted[0].timestamp;
+    } else if (tenantContacts.length > 0) {
+      const sorted = [...tenantContacts].sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+      lastActivityAt = sorted[0].lastMessageAt;
+    }
+
+    return {
+      tenant,
+      owner,
+      totalContacts: tenantContacts.length,
+      totalMessages: tenantMessages.length,
+      aiHandledMessages: aiHandled,
+      humanHandledMessages: humanHandled,
+      lastActivityAt,
+    };
+  });
+}
+
+export async function overrideClientSubscription(
+  tenantId: string,
+  status: 'active' | 'inactive' | 'trial',
+  plan?: string
+): Promise<UserAccount | undefined> {
+  const users = await getUsers();
+  const owner = users.find((u) => u.tenantId === tenantId);
+  if (!owner) return undefined;
+
+  return updateUserSubscription(owner.id, status, {
+    plan: plan || (status === 'active' ? 'Zevarone Admin Override (Active)' : 'Inactive'),
+    subscriptionExpiresAt: status === 'active' ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() : undefined,
+  });
 }

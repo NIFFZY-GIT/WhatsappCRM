@@ -94,12 +94,35 @@ export interface UserAccount {
   name: string;
   businessName: string;
   tenantId: string;
-  role: 'admin' | 'owner' | 'member';
+  role: 'superadmin' | 'admin' | 'owner' | 'member';
   subscriptionStatus: 'active' | 'inactive' | 'trial';
   subscriptionPlan?: string;
+  billingInterval?: 'monthly' | 'annual';
+  subscriptionExpiresAt?: string;
   stripeCustomerId?: string;
   stripeSessionId?: string;
   createdAt: string;
+}
+
+export function isZevaroneAdmin(user?: UserAccount | null): boolean {
+  if (!user) return false;
+  const email = (user.email || '').toLowerCase().trim();
+  return (
+    user.role === 'superadmin' ||
+    email.endsWith('@zevarone.com') ||
+    email === 'admin@zevarone.com' ||
+    email === 'knipuna@zevarone.com'
+  );
+}
+
+export interface ClientWorkspaceSummary {
+  tenant: Tenant;
+  owner?: UserAccount;
+  totalContacts: number;
+  totalMessages: number;
+  aiHandledMessages: number;
+  humanHandledMessages: number;
+  lastActivityAt?: string;
 }
 
 export interface AppNotification {

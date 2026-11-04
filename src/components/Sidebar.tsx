@@ -22,8 +22,10 @@ import {
   User,
   LogOut,
   LogIn,
+  Download,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { isZevaroneAdmin } from '@/lib/types';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -71,6 +73,13 @@ export default function Sidebar() {
       icon: CreditCard,
       badge: isProUser ? 'Pro' : 'Pay',
       badgeColor: isProUser ? 'bg-[#00A884] text-white' : 'bg-amber-400 text-[#111B21]',
+    },
+    {
+      label: 'Admin Client Monitor',
+      href: '/admin',
+      icon: ShieldCheck,
+      badge: 'Master',
+      badgeColor: 'bg-emerald-400 text-slate-950 font-bold',
     },
     {
       label: 'Client Businesses',
