@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     if (session.payment_status === 'paid' || session.status === 'complete') {
       const customerEmail = session.customer_details?.email || session.customer_email || email;
       const stripeCustomerId = typeof session.customer === 'string' ? session.customer : undefined;
+      const stripeSubscriptionId = typeof session.subscription === 'string' ? session.subscription : undefined;
       const detectedInterval = session.metadata?.billingInterval || interval;
       const sessionIsAnnual = detectedInterval === 'annual';
       const actualPlan = sessionIsAnnual
@@ -41,10 +42,12 @@ export async function POST(req: NextRequest) {
       if (customerEmail) {
         const updated = await updateUserSubscription(customerEmail, 'active', {
           customerId: stripeCustomerId,
+          subscriptionId: stripeSubscriptionId,
           sessionId: session.id,
           plan: actualPlan,
           billingInterval: sessionIsAnnual ? 'annual' : 'monthly',
           subscriptionExpiresAt: actualExpiresAt,
+          cancelAtPeriodEnd: false,
         });
 
         // Send payment confirmation email via Zoho SMTP

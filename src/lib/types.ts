@@ -100,7 +100,9 @@ export interface UserAccount {
   billingInterval?: 'monthly' | 'annual';
   subscriptionExpiresAt?: string;
   stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
   stripeSessionId?: string;
+  cancelAtPeriodEnd?: boolean;
   createdAt: string;
 }
 

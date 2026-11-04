@@ -875,15 +875,22 @@ export async function upsertUser(user: Partial<UserAccount> & { email: string; n
   return userObj;
 }
 
+export async function getUserByStripeCustomerId(customerId: string): Promise<UserAccount | undefined> {
+  const users = await getUsers();
+  return users.find((u) => u.stripeCustomerId === customerId);
+}
+
 export async function updateUserSubscription(
   userIdOrEmail: string,
   status: 'active' | 'inactive' | 'trial',
   stripeData?: {
     customerId?: string;
+    subscriptionId?: string;
     sessionId?: string;
     plan?: string;
     billingInterval?: 'monthly' | 'annual';
     subscriptionExpiresAt?: string;
+    cancelAtPeriodEnd?: boolean;
   }
 ): Promise<UserAccount | undefined> {
   const currentUsers = await getUsers();
@@ -895,10 +902,12 @@ export async function updateUserSubscription(
     const updatedUsers = [...currentUsers];
     updatedUsers[idx].subscriptionStatus = status;
     if (stripeData?.customerId) updatedUsers[idx].stripeCustomerId = stripeData.customerId;
+    if (stripeData?.subscriptionId) updatedUsers[idx].stripeSubscriptionId = stripeData.subscriptionId;
     if (stripeData?.sessionId) updatedUsers[idx].stripeSessionId = stripeData.sessionId;
     if (stripeData?.plan) updatedUsers[idx].subscriptionPlan = stripeData.plan;
     if (stripeData?.billingInterval) updatedUsers[idx].billingInterval = stripeData.billingInterval;
     if (stripeData?.subscriptionExpiresAt) updatedUsers[idx].subscriptionExpiresAt = stripeData.subscriptionExpiresAt;
+    if (stripeData?.cancelAtPeriodEnd !== undefined) updatedUsers[idx].cancelAtPeriodEnd = stripeData.cancelAtPeriodEnd;
 
     // Save to Supabase
     const supabase = getSupabase();

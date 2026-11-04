@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createStripeCheckoutSession, getStripe } from '@/lib/stripe';
-import { getTenant } from '@/lib/store';
+import { getUserByEmail, getUserById } from '@/lib/store';
+import { getSessionUser } from '@/lib/auth-server';
 
 export async function POST(req: NextRequest) {
   try {
+    const sessionUser = await getSessionUser(req);
     const body = await req.json();
     const { userEmail, userId, tenantId, customerName, billingInterval = 'monthly' } = body;
 
-    if (!userEmail) {
+    const email = userEmail || sessionUser?.email;
+    if (!email) {
       return NextResponse.json(
         { success: false, error: 'User email is required for Stripe billing.' },
         { status: 400 }
@@ -24,11 +27,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const user = sessionUser || (await getUserByEmail(email));
+    const customerId = user?.stripeCustomerId;
+
     const session = await createStripeCheckoutSession({
-      userEmail,
-      userId,
-      tenantId,
-      customerName,
+      userEmail: email,
+      userId: user?.id || userId,
+      tenantId: user?.tenantId || tenantId,
+      customerName: user?.name || customerName,
+      customerId,
       billingInterval,
       successUrl: `${appUrl}/billing?success=true&session_id={CHECKOUT_SESSION_ID}&interval=${billingInterval}`,
       cancelUrl: `${appUrl}/billing?canceled=true`,

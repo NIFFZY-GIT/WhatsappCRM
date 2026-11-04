@@ -16,13 +16,14 @@ export function getStripe(): Stripe | null {
 }
 
 /**
- * Create Stripe Checkout Session for Monthly (5,000 LKR) or Annual (54,000 LKR) subscription
+ * Create Stripe Checkout Session for Monthly (5,000 LKR) or Annual (54,000 LKR) recurring subscription
  */
 export async function createStripeCheckoutSession({
   userEmail,
   userId,
   tenantId,
   customerName,
+  customerId,
   billingInterval = 'monthly',
   successUrl,
   cancelUrl,
@@ -31,6 +32,7 @@ export async function createStripeCheckoutSession({
   userId?: string;
   tenantId?: string;
   customerName?: string;
+  customerId?: string;
   billingInterval?: 'monthly' | 'annual';
   successUrl: string;
   cancelUrl: string;
@@ -47,9 +49,8 @@ export async function createStripeCheckoutSession({
   const interval = isAnnual ? 'year' : 'month';
   const planName = isAnnual ? SUBSCRIPTION_PLAN_ANNUAL : SUBSCRIPTION_PLAN_MONTHLY;
 
-  const session = await stripe.checkout.sessions.create({
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
     mode: 'subscription',
-    customer_email: userEmail,
     line_items: [
       {
         price_data: {
@@ -57,8 +58,8 @@ export async function createStripeCheckoutSession({
           product_data: {
             name: planName,
             description: isAnnual
-              ? 'Annual Pro Subscription with 10% discount: Full access to WhatsApp Shared Inbox, Gemini AI Sales Concierge, Automated Media Sequences, Product Catalog, and Multi-Tenant Isolation for 1 full year.'
-              : 'Monthly Pro Subscription: Full access to WhatsApp Shared Inbox, Gemini AI Sales Concierge, Automated Media Sequences, Product Catalog, and Multi-Tenant Isolation.',
+              ? 'Annual Pro Subscription: 54,000 LKR billed annually (4,500 LKR/mo). Recurring auto-renewal every 12 months with saved card on file.'
+              : 'Monthly Pro Subscription: 5,000 LKR billed monthly. Recurring auto-renewal every 30 days with saved card on file.',
           },
           unit_amount: unitAmount,
           recurring: {
@@ -77,10 +78,137 @@ export async function createStripeCheckoutSession({
     },
     success_url: successUrl,
     cancel_url: cancelUrl,
-  });
+  };
+
+  if (customerId) {
+    sessionParams.customer = customerId;
+  } else {
+    sessionParams.customer_email = userEmail;
+  }
+
+  const session = await stripe.checkout.sessions.create(sessionParams);
 
   return {
     url: session.url || '',
     sessionId: session.id,
   };
+}
+
+/**
+ * Create Stripe Customer Portal Session for card updates, cancellation, & receipt downloads
+ */
+export async function createStripeCustomerPortalSession({
+  customerId,
+  returnUrl,
+}: {
+  customerId: string;
+  returnUrl: string;
+}): Promise<string> {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw new Error('STRIPE_SECRET_KEY is not configured.');
+  }
+
+  const portalSession = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: returnUrl,
+  });
+
+  return portalSession.url;
+}
+
+/**
+ * Fetch default payment method (card details) for a Stripe Customer
+ */
+export async function getStripeCustomerPaymentMethod(customerId: string): Promise<{
+  brand?: string;
+  last4?: string;
+  expMonth?: number;
+  expYear?: number;
+} | null> {
+  const stripe = getStripe();
+  if (!stripe) return null;
+
+  try {
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'card',
+      limit: 1,
+    });
+
+    if (paymentMethods.data.length > 0 && paymentMethods.data[0].card) {
+      const card = paymentMethods.data[0].card;
+      return {
+        brand: card.brand,
+        last4: card.last4,
+        expMonth: card.exp_month,
+        expYear: card.exp_year,
+      };
+    }
+
+    return null;
+  } catch (err) {
+    console.warn('[Stripe] Could not fetch payment method for customer:', customerId, err);
+    return null;
+  }
+}
+
+/**
+ * Cancel Stripe Subscription (defaults to cancel at period end so customer gets what they paid for)
+ */
+export async function cancelStripeSubscription(
+  subscriptionId: string,
+  cancelAtPeriodEnd = true
+): Promise<Stripe.Subscription | null> {
+  const stripe = getStripe();
+  if (!stripe) return null;
+
+  try {
+    if (cancelAtPeriodEnd) {
+      return await stripe.subscriptions.update(subscriptionId, {
+        cancel_at_period_end: true,
+      });
+    } else {
+      return await stripe.subscriptions.cancel(subscriptionId);
+    }
+  } catch (err) {
+    console.error('[Stripe] Cancel subscription error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Resume a subscription that was set to cancel at period end
+ */
+export async function resumeStripeSubscription(
+  subscriptionId: string
+): Promise<Stripe.Subscription | null> {
+  const stripe = getStripe();
+  if (!stripe) return null;
+
+  try {
+    return await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: false,
+    });
+  } catch (err) {
+    console.error('[Stripe] Resume subscription error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Retrieve Stripe Subscription details
+ */
+export async function getStripeSubscription(
+  subscriptionId: string
+): Promise<Stripe.Subscription | null> {
+  const stripe = getStripe();
+  if (!stripe) return null;
+
+  try {
+    return await stripe.subscriptions.retrieve(subscriptionId);
+  } catch (err) {
+    console.warn('[Stripe] Could not retrieve subscription:', subscriptionId, err);
+    return null;
+  }
 }
