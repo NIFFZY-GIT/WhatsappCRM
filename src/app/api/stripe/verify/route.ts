@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { getUserByEmail, getUserById, updateUserSubscription } from '@/lib/store';
+import { sendPaymentReceiptEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,6 +28,18 @@ export async function POST(req: NextRequest) {
           subscriptionExpiresAt: expiresAt,
           sessionId: sessionId || `demo_sess_${Date.now()}`,
         });
+
+        // Send payment confirmation email via Zoho SMTP
+        sendPaymentReceiptEmail({
+          to: targetUser.email,
+          name: targetUser.name,
+          businessName: targetUser.businessName,
+          amountLkr: isAnnual ? 54000 : 5000,
+          interval: isAnnual ? 'annual' : 'monthly',
+          planName: planName,
+          sessionId: sessionId || `DEMO-${Date.now()}`,
+        }).catch((e) => console.warn('Payment receipt email error:', e));
+
         return NextResponse.json({
           success: true,
           message: `Subscription successfully activated (${isAnnual ? 'Annual 4,500 LKR/mo' : 'Monthly 5,000 LKR/mo'} - Demo / Test Mode)!`,
@@ -66,13 +79,23 @@ export async function POST(req: NextRequest) {
       ).toISOString();
 
       if (customerEmail) {
-        await updateUserSubscription(customerEmail, 'active', {
+        const updated = await updateUserSubscription(customerEmail, 'active', {
           customerId: stripeCustomerId,
           sessionId: session.id,
           plan: actualPlan,
           billingInterval: sessionIsAnnual ? 'annual' : 'monthly',
           subscriptionExpiresAt: actualExpiresAt,
         });
+
+        sendPaymentReceiptEmail({
+          to: customerEmail,
+          name: updated?.name || 'Valued Business Partner',
+          businessName: updated?.businessName || 'Your Business',
+          amountLkr: sessionIsAnnual ? 54000 : 5000,
+          interval: sessionIsAnnual ? 'annual' : 'monthly',
+          planName: actualPlan,
+          sessionId: session.id,
+        }).catch((e) => console.warn('Payment receipt email error:', e));
       }
 
       return NextResponse.json({

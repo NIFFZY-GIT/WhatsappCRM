@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserByEmail, upsertUser, upsertTenant } from '@/lib/store';
 import { Tenant, UserAccount } from '@/lib/types';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -65,6 +66,15 @@ export async function POST(req: NextRequest) {
     };
 
     const savedUser = await upsertUser(newUser);
+
+    // Send welcome email via Zoho SMTP asynchronously
+    sendWelcomeEmail({
+      to: savedUser.email,
+      name: savedUser.name,
+      businessName: savedUser.businessName,
+    }).catch((emailErr) => {
+      console.warn('Welcome email error (non-fatal):', emailErr);
+    });
 
     const res = NextResponse.json({
       success: true,

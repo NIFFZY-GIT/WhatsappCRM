@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripe } from '@/lib/stripe';
 import { getUserByEmail, updateUserSubscription } from '@/lib/store';
+import { sendPaymentReceiptEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   const stripe = getStripe();
@@ -27,13 +28,36 @@ export async function POST(req: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object;
         const customerEmail = session.customer_details?.email || session.customer_email;
+        const interval = (session.metadata?.billingInterval as 'monthly' | 'annual') || 'monthly';
+        const isAnnual = interval === 'annual';
+        const planName = isAnnual
+          ? 'WhatsApp CRM & Gemini AI Pro - Annual (4,500 LKR/mo, 54,000 LKR/yr)'
+          : 'WhatsApp CRM & Gemini AI Pro - Monthly (5,000 LKR/mo)';
+
+        const expiresAt = new Date(
+          Date.now() + (isAnnual ? 365 : 30) * 24 * 60 * 60 * 1000
+        ).toISOString();
+
         if (customerEmail) {
-          await updateUserSubscription(customerEmail, 'active', {
+          const updated = await updateUserSubscription(customerEmail, 'active', {
             customerId: typeof session.customer === 'string' ? session.customer : undefined,
             sessionId: session.id,
-            plan: 'WhatsApp CRM & Gemini AI Pro (5,000 LKR/mo)',
+            plan: planName,
+            billingInterval: interval,
+            subscriptionExpiresAt: expiresAt,
           });
-          console.log(`[Stripe Webhook] Subscription activated for ${customerEmail} (5,000 LKR)`);
+
+          sendPaymentReceiptEmail({
+            to: customerEmail,
+            name: updated?.name || 'Customer',
+            businessName: updated?.businessName || 'Business',
+            amountLkr: isAnnual ? 54000 : 5000,
+            interval,
+            planName,
+            sessionId: session.id,
+          }).catch((e) => console.warn('Payment receipt email webhook error:', e));
+
+          console.log(`[Stripe Webhook] Subscription activated for ${customerEmail} (${planName})`);
         }
         break;
       }
