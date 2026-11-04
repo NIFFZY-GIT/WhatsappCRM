@@ -236,6 +236,209 @@ export async function sendWhatsAppTemplateMessage(
 }
 
 /**
+ * Send an image message (via public URL or uploaded Meta media ID) via WhatsApp Cloud API
+ */
+export async function sendWhatsAppImageMessage(
+  recipientPhone: string,
+  imageInput: { link?: string; id?: string; caption?: string },
+  options?: {
+    token?: string;
+    phoneNumberId?: string;
+    apiVersion?: string;
+  }
+): Promise<WhatsAppSendResult> {
+  const defaultConfig = getWhatsAppConfig();
+  const token = cleanWhatsAppToken(options?.token || defaultConfig.token);
+  const phoneNumberId = options?.phoneNumberId?.trim() || defaultConfig.phoneNumberId;
+  const apiVersion = options?.apiVersion?.trim() || defaultConfig.apiVersion;
+
+  const formattedPhone = formatPhoneNumber(recipientPhone);
+
+  if (!token || !phoneNumberId) {
+    return {
+      success: false,
+      error: 'WhatsApp credentials missing. Please set WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID in .env',
+    };
+  }
+
+  const imagePayload: any = {};
+  if (imageInput.id) {
+    imagePayload.id = imageInput.id;
+  } else if (imageInput.link) {
+    imagePayload.link = imageInput.link;
+  } else {
+    return {
+      success: false,
+      error: 'Either image URL (link) or media ID is required to send an image.',
+    };
+  }
+
+  if (imageInput.caption && imageInput.caption.trim()) {
+    imagePayload.caption = imageInput.caption.trim();
+  }
+
+  const endpoint = `${GRAPH_API_BASE}/${apiVersion}/${phoneNumberId}/messages`;
+  const payload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to: formattedPhone,
+    type: 'image',
+    image: imagePayload,
+  };
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      const errorMsg = data?.error?.message || data?.error?.error_user_msg || res.statusText;
+      console.error('WhatsApp send image error:', data);
+      return {
+        success: false,
+        error: errorMsg,
+        details: data.error,
+      };
+    }
+
+    const messageId = data?.messages?.[0]?.id;
+    return {
+      success: true,
+      messageId,
+      details: data,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || 'Network error sending WhatsApp image message',
+    };
+  }
+}
+
+/**
+ * Upload an image file directly to Meta's WhatsApp Media endpoint
+ */
+export async function uploadWhatsAppMedia(
+  fileBuffer: Buffer | Blob,
+  fileName: string,
+  mimeType: string,
+  options?: {
+    token?: string;
+    phoneNumberId?: string;
+    apiVersion?: string;
+  }
+): Promise<{ success: boolean; mediaId?: string; error?: string }> {
+  const defaultConfig = getWhatsAppConfig();
+  const token = cleanWhatsAppToken(options?.token || defaultConfig.token);
+  const phoneNumberId = options?.phoneNumberId?.trim() || defaultConfig.phoneNumberId;
+  const apiVersion = options?.apiVersion?.trim() || defaultConfig.apiVersion;
+
+  if (!token || !phoneNumberId) {
+    return {
+      success: false,
+      error: 'WhatsApp credentials missing.',
+    };
+  }
+
+  const endpoint = `${GRAPH_API_BASE}/${apiVersion}/${phoneNumberId}/media`;
+
+  try {
+    const formData = new FormData();
+    const blob = fileBuffer instanceof Blob ? fileBuffer : new Blob([new Uint8Array(fileBuffer)], { type: mimeType });
+    formData.append('file', blob, fileName);
+    formData.append('type', mimeType);
+    formData.append('messaging_product', 'whatsapp');
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return {
+        success: false,
+        error: data?.error?.message || 'Failed to upload media to WhatsApp',
+      };
+    }
+
+    return {
+      success: true,
+      mediaId: data.id,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || 'Network error uploading media to WhatsApp',
+    };
+  }
+}
+
+/**
+ * Retrieve the media download URL from Meta for an incoming media ID
+ */
+export async function getWhatsAppMediaUrl(
+  mediaId: string,
+  options?: {
+    token?: string;
+    apiVersion?: string;
+  }
+): Promise<{ success: boolean; url?: string; mimeType?: string; error?: string }> {
+  const defaultConfig = getWhatsAppConfig();
+  const token = cleanWhatsAppToken(options?.token || defaultConfig.token);
+  const apiVersion = options?.apiVersion?.trim() || defaultConfig.apiVersion;
+
+  if (!token || !mediaId) {
+    return {
+      success: false,
+      error: 'WhatsApp credentials or media ID missing.',
+    };
+  }
+
+  const endpoint = `${GRAPH_API_BASE}/${apiVersion}/${mediaId}`;
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return {
+        success: false,
+        error: data?.error?.message || 'Failed to fetch media metadata',
+      };
+    }
+
+    return {
+      success: true,
+      url: data.url,
+      mimeType: data.mime_type,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message || 'Network error fetching WhatsApp media',
+    };
+  }
+}
+
+/**
  * Mark a message as read in WhatsApp
  */
 export async function markWhatsAppMessageAsRead(messageId: string): Promise<boolean> {

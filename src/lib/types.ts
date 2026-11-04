@@ -48,6 +48,8 @@ export interface ChatMessage {
   sender: 'customer' | 'bot' | 'agent' | 'system';
   mode?: BotMode;
   text: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'audio' | 'document';
   timestamp: string;
   status?: 'sent' | 'delivered' | 'read' | 'failed';
   waMessageId?: string;

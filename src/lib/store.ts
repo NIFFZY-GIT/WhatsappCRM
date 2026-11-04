@@ -476,6 +476,43 @@ export async function setContactHumanAssistance(phone: string, needsHuman: boole
 
 /* ==================== MESSAGES ==================== */
 
+export function parseStoredMessage(m: any): ChatMessage {
+  let text = m.text || '';
+  let mediaUrl = m.media_url || m.mediaUrl;
+  let mediaType = m.media_type || m.mediaType;
+
+  if (text.startsWith('__MEDIA__:')) {
+    try {
+      const parsed = JSON.parse(text.substring('__MEDIA__:'.length));
+      mediaUrl = parsed.url;
+      mediaType = parsed.type || 'image';
+      text = parsed.text || '';
+    } catch (e) {}
+  } else if (text.startsWith('[IMAGE:')) {
+    const match = text.match(/^\[IMAGE:\s*([^\]]+)\]\s*([\s\S]*)$/);
+    if (match) {
+      mediaUrl = match[1].trim();
+      mediaType = 'image';
+      text = match[2]?.trim() || '';
+    }
+  }
+
+  return {
+    id: m.id,
+    tenantId: m.tenant_id || m.tenantId,
+    contactPhone: m.contact_phone || m.contactPhone,
+    sender: m.sender,
+    mode: m.mode,
+    text,
+    mediaUrl,
+    mediaType,
+    timestamp: m.timestamp,
+    status: m.status,
+    waMessageId: m.wa_message_id || m.waMessageId,
+    error: m.error,
+  };
+}
+
 export async function addMessage(msg: Omit<ChatMessage, 'id' | 'timestamp'> & { tenantId?: string }): Promise<ChatMessage> {
   const cleanPhone = msg.contactPhone.replace(/\D/g, '');
   const activeTenantId = msg.tenantId || 'tenant_zevarone';
@@ -490,7 +527,7 @@ export async function addMessage(msg: Omit<ChatMessage, 'id' | 'timestamp'> & { 
     timestamp: now,
   };
 
-  const lowerText = msg.text.toLowerCase();
+  const lowerText = (msg.text || '').toLowerCase();
   const humanTrigger =
     lowerText.includes('talk to human') ||
     lowerText.includes('speak to human') ||
@@ -504,13 +541,18 @@ export async function addMessage(msg: Omit<ChatMessage, 'id' | 'timestamp'> & { 
   const supabase = getSupabase();
   if (supabase) {
     try {
+      // If message contains media, encode in text for safe Supabase schema compatibility
+      const storedText = msg.mediaUrl
+        ? `__MEDIA__:${JSON.stringify({ url: msg.mediaUrl, type: msg.mediaType || 'image', text: msg.text || '' })}`
+        : msg.text || '';
+
       const row = {
         id,
         tenant_id: activeTenantId,
         contact_phone: cleanPhone,
         sender: msg.sender,
         mode: msg.mode || 'ai_chatbot',
-        text: msg.text,
+        text: storedText,
         timestamp: now,
         status: msg.status || 'delivered',
         wa_message_id: msg.waMessageId || null,
@@ -551,18 +593,7 @@ export async function getMessagesForContact(phone: string, tenantId?: string): P
         .order('timestamp', { ascending: true });
 
       if (!error && data) {
-        return data.map((m: any) => ({
-          id: m.id,
-          tenantId: m.tenant_id,
-          contactPhone: m.contact_phone,
-          sender: m.sender,
-          mode: m.mode,
-          text: m.text,
-          timestamp: m.timestamp,
-          status: m.status,
-          waMessageId: m.wa_message_id,
-          error: m.error,
-        }));
+        return data.map(parseStoredMessage);
       }
     } catch (e) {
       console.warn('Supabase getMessages error, fallback to local:', e);
@@ -572,7 +603,8 @@ export async function getMessagesForContact(phone: string, tenantId?: string): P
   const local = ensureLocalStore();
   return local.messages
     .filter((m) => m.contactPhone.replace(/\D/g, '') === cleanPhone && (!tenantId || m.tenantId === tenantId))
-    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+    .map(parseStoredMessage);
 }
 
 export async function deleteConversation(phone: string, tenantId?: string): Promise<boolean> {

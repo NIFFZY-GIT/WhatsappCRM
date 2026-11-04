@@ -11,6 +11,13 @@ import {
   Check,
   Send,
   RefreshCw,
+  Paperclip,
+  Image as ImageIcon,
+  X,
+  UploadCloud,
+  ZoomIn,
+  Link as LinkIcon,
+  Loader2,
 } from 'lucide-react';
 import { Contact, ChatMessage, BotMode } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
@@ -26,6 +33,20 @@ export default function InboxPage() {
   const [agentReplyText, setAgentReplyText] = useState('');
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Image attachment states
+  const [selectedImage, setSelectedImage] = useState<{
+    previewUrl: string;
+    mediaId?: string;
+    fileName?: string;
+    isUploading?: boolean;
+  } | null>(null);
+  const [showAttachModal, setShowAttachModal] = useState(false);
+  const [imageTab, setImageTab] = useState<'upload' | 'url'>('upload');
+  const [imageUrlInput, setImageUrlInput] = useState('');
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // References for live auto-scroll and tracking
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -348,14 +369,121 @@ export default function InboxPage() {
   };
 
   /**
+   * Handle image file upload to WhatsApp Cloud
+   */
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedTenant) return;
+
+    if (!file.type.startsWith('image/')) {
+      notify({
+        type: 'error',
+        title: 'Invalid File',
+        message: 'Please choose an image file (PNG, JPG, WEBP, GIF).',
+      });
+      return;
+    }
+
+    // Local instant preview
+    const localUrl = URL.createObjectURL(file);
+    setSelectedImage({
+      previewUrl: localUrl,
+      fileName: file.name,
+      isUploading: true,
+    });
+    setShowAttachModal(false);
+    setIsUploadingFile(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('tenantId', selectedTenant.id);
+
+      const res = await fetch('/api/upload-media', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success && data.mediaId) {
+        setSelectedImage({
+          previewUrl: data.previewUrl || localUrl,
+          mediaId: data.mediaId,
+          fileName: file.name,
+          isUploading: false,
+        });
+        notify({
+          type: 'success',
+          title: 'Image Ready',
+          message: 'Uploaded to WhatsApp Cloud. Add a caption and click Send.',
+        });
+      } else {
+        setSelectedImage(null);
+        notify({
+          type: 'error',
+          title: 'Upload Failed',
+          message: data.error || 'Failed to upload image to Meta.',
+        });
+      }
+    } catch (err: any) {
+      setSelectedImage(null);
+      notify({
+        type: 'error',
+        title: 'Upload Error',
+        message: err.message || 'Network error uploading image.',
+      });
+    } finally {
+      setIsUploadingFile(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  /**
+   * Handle attaching an image URL
+   */
+  const handleApplyImageUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!imageUrlInput.trim()) return;
+
+    setSelectedImage({
+      previewUrl: imageUrlInput.trim(),
+      fileName: 'Image Link',
+      isUploading: false,
+    });
+    setImageUrlInput('');
+    setShowAttachModal(false);
+    notify({
+      type: 'info',
+      title: 'Image Attached',
+      message: 'Add an optional caption and click Send to dispatch to WhatsApp.',
+    });
+  };
+
+  /**
    * Send Manual Agent Reply with instant optimistic update
    */
   const handleSendAgentReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedContact || !agentReplyText.trim() || !selectedTenant) return;
+    const hasImage = Boolean(selectedImage);
+    const hasText = Boolean(agentReplyText.trim());
+
+    if (!selectedContact || (!hasText && !hasImage) || !selectedTenant) return;
+    if (selectedImage?.isUploading) {
+      notify({
+        type: 'warning',
+        title: 'Please Wait',
+        message: 'Image is still uploading to WhatsApp Cloud...',
+      });
+      return;
+    }
 
     const textToSend = agentReplyText.trim();
+    const imageToSend = selectedImage ? { ...selectedImage } : null;
+
     setAgentReplyText('');
+    setSelectedImage(null);
 
     // Instant optimistic message in the UI so the user sees it immediately
     const tempId = `optimistic-${Date.now()}`;
@@ -365,6 +493,8 @@ export default function InboxPage() {
       contactPhone: selectedContact.phone,
       sender: 'agent',
       text: textToSend,
+      mediaUrl: imageToSend?.previewUrl,
+      mediaType: imageToSend ? 'image' : undefined,
       timestamp: new Date().toISOString(),
       status: 'sent',
     };
@@ -387,6 +517,9 @@ export default function InboxPage() {
           tenantId: selectedTenant.id,
           phone: selectedContact.phone,
           text: textToSend,
+          imageUrl: imageToSend?.previewUrl?.startsWith('http') ? imageToSend.previewUrl : undefined,
+          mediaId: imageToSend?.mediaId,
+          mediaPreviewUrl: imageToSend?.previewUrl,
         }),
       });
       const data = await res.json();
@@ -397,8 +530,8 @@ export default function InboxPage() {
         );
         notify({
           type: 'success',
-          title: 'Reply Sent to WhatsApp',
-          message: `Message dispatched to ${selectedContact.name} (+${selectedContact.phone})`,
+          title: 'Dispatched to WhatsApp',
+          message: imageToSend ? 'Photo and message delivered!' : `Message dispatched to ${selectedContact.name} (+${selectedContact.phone})`,
         });
       } else {
         // Remove optimistic message if dispatch failed
@@ -700,7 +833,28 @@ export default function InboxPage() {
                           )}
                         </div>
 
-                        <p className="whitespace-pre-line leading-relaxed text-[#111B21]">{m.text}</p>
+                        {/* If image is attached, show preview */}
+                        {m.mediaUrl && (
+                          <div className="mb-2 rounded-lg overflow-hidden border border-[#E9EDEF]/80 bg-black/5 relative group cursor-pointer max-w-sm">
+                            <img
+                              src={m.mediaUrl}
+                              alt="WhatsApp attachment"
+                              className="w-full max-h-72 object-cover rounded-lg hover:opacity-95 transition"
+                              onClick={() => setLightboxUrl(m.mediaUrl!)}
+                              loading="lazy"
+                            />
+                            <div
+                              onClick={() => setLightboxUrl(m.mediaUrl!)}
+                              className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+                            >
+                              <span className="bg-black/75 text-white text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1 font-medium shadow-sm">
+                                <ZoomIn className="w-3 h-3" /> View full photo
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {m.text && <p className="whitespace-pre-line leading-relaxed text-[#111B21]">{m.text}</p>}
 
                         <div className="text-[9px] mt-1 text-right flex items-center justify-end gap-1 text-[#667781]">
                           <span>
@@ -721,26 +875,246 @@ export default function InboxPage() {
             </div>
 
             {/* Human Agent Takeover Box */}
-            <form
-              onSubmit={handleSendAgentReply}
-              className="p-3 bg-[#F0F2F5] border-t border-[#E9EDEF] flex items-center gap-2"
-            >
-              <input
-                type="text"
-                placeholder={`Reply manually on WhatsApp as ${selectedTenant?.name}...`}
-                value={agentReplyText}
-                onChange={(e) => setAgentReplyText(e.target.value)}
-                className="flex-1 px-4 py-2.5 bg-white border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:outline-none focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] transition"
-              />
-              <button
-                type="submit"
-                disabled={isSendingReply || !agentReplyText.trim()}
-                className="px-4 py-2.5 bg-[#00A884] hover:bg-[#075E54] disabled:opacity-50 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            <div className="bg-[#F0F2F5] border-t border-[#E9EDEF]">
+              {/* Attached Image Preview Bar */}
+              {selectedImage && (
+                <div className="px-3 pt-2.5 pb-2 flex items-center justify-between bg-[#E9EDEF]/70 border-b border-[#E9EDEF]">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-11 h-11 rounded-lg overflow-hidden bg-white border border-[#E9EDEF] flex-shrink-0 relative shadow-2xs">
+                      <img
+                        src={selectedImage.previewUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      {selectedImage.isUploading && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 text-xs">
+                      <span className="font-semibold text-[#111B21] truncate block max-w-xs">
+                        {selectedImage.fileName || 'Attached Photo'}
+                      </span>
+                      <span className="text-[10px] text-[#075E54] font-medium flex items-center gap-1">
+                        {selectedImage.isUploading ? (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            Uploading to WhatsApp Cloud...
+                          </>
+                        ) : (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#25D366]" />
+                            Ready to send to client
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedImage(null)}
+                    className="p-1.5 text-[#667781] hover:text-rose-600 rounded-lg hover:bg-white transition cursor-pointer"
+                    title="Remove attachment"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              <form
+                onSubmit={handleSendAgentReply}
+                className="p-3 flex items-center gap-2"
               >
-                <Send className="w-3.5 h-3.5" />
-                <span>Send</span>
-              </button>
-            </form>
+                {/* Hidden File Input for Image Upload */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  onChange={handleFileSelected}
+                  className="hidden"
+                />
+
+                {/* Attach Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowAttachModal(true)}
+                  className="p-2.5 text-[#54656F] hover:text-[#00A884] hover:bg-white rounded-xl transition cursor-pointer border border-transparent hover:border-[#E9EDEF]"
+                  title="Attach Photo (Upload or URL)"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </button>
+
+                <input
+                  type="text"
+                  placeholder={
+                    selectedImage
+                      ? 'Add an optional caption for this photo...'
+                      : `Reply manually on WhatsApp as ${selectedTenant?.name}...`
+                  }
+                  value={agentReplyText}
+                  onChange={(e) => setAgentReplyText(e.target.value)}
+                  className="flex-1 px-4 py-2.5 bg-white border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:outline-none focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] transition"
+                />
+
+                <button
+                  type="submit"
+                  disabled={
+                    isSendingReply ||
+                    (!agentReplyText.trim() && !selectedImage) ||
+                    selectedImage?.isUploading
+                  }
+                  className="px-4 py-2.5 bg-[#00A884] hover:bg-[#075E54] disabled:opacity-50 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                >
+                  {isSendingReply ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5" />
+                  )}
+                  <span>Send</span>
+                </button>
+              </form>
+            </div>
+
+            {/* MODAL: ATTACH PHOTO */}
+            {showAttachModal && (
+              <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl border border-[#E9EDEF] max-w-md w-full p-5 animate-in fade-in zoom-in-95 shadow-xl">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#E9EDEF] mb-4">
+                    <h3 className="font-bold text-[#111B21] text-sm flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-[#075E54]" />
+                      Attach Photo for WhatsApp
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowAttachModal(false)}
+                      className="text-[#667781] hover:text-[#111B21] text-lg font-bold p-1 cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  {/* Tabs: Upload vs Link */}
+                  <div className="flex border-b border-[#E9EDEF] mb-4">
+                    <button
+                      type="button"
+                      onClick={() => setImageTab('upload')}
+                      className={`flex-1 py-2 text-xs font-semibold border-b-2 transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                        imageTab === 'upload'
+                          ? 'border-[#00A884] text-[#075E54]'
+                          : 'border-transparent text-[#667781] hover:text-[#111B21]'
+                      }`}
+                    >
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      Upload from Computer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageTab('url')}
+                      className={`flex-1 py-2 text-xs font-semibold border-b-2 transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                        imageTab === 'url'
+                          ? 'border-[#00A884] text-[#075E54]'
+                          : 'border-transparent text-[#667781] hover:text-[#111B21]'
+                      }`}
+                    >
+                      <LinkIcon className="w-3.5 h-3.5" />
+                      Public Image URL
+                    </button>
+                  </div>
+
+                  {imageTab === 'upload' ? (
+                    <div className="space-y-4">
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-2 border-dashed border-[#8696A0]/40 hover:border-[#00A884] bg-[#F0F2F5]/60 hover:bg-[#D9FDD3]/20 rounded-xl p-8 text-center cursor-pointer transition"
+                      >
+                        <UploadCloud className="w-10 h-10 text-[#075E54] mx-auto mb-2 opacity-80" />
+                        <p className="text-xs font-semibold text-[#111B21]">Click to choose an image file</p>
+                        <p className="text-[11px] text-[#667781] mt-1">PNG, JPG, JPEG, WEBP or GIF (Max 16MB)</p>
+                      </div>
+                      <p className="text-[11px] text-[#667781] leading-relaxed">
+                        The image will be securely uploaded directly to Meta&apos;s WhatsApp Cloud and delivered immediately to the customer&apos;s phone.
+                      </p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleApplyImageUrl} className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#111B21] mb-1">
+                          Direct Image Link (HTTPS)
+                        </label>
+                        <input
+                          type="url"
+                          required
+                          placeholder="https://example.com/product-image.jpg"
+                          value={imageUrlInput}
+                          onChange={(e) => setImageUrlInput(e.target.value)}
+                          className="w-full px-3 py-2 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:ring-1 focus:ring-[#00A884] focus:outline-none transition"
+                        />
+                        <span className="text-[10px] text-[#667781] mt-1 block">
+                          Paste a product photo from your website, catalog, or CDN.
+                        </span>
+                      </div>
+
+                      {imageUrlInput.trim() && (
+                        <div className="p-2 border border-[#E9EDEF] rounded-xl bg-[#F0F2F5] text-center">
+                          <img
+                            src={imageUrlInput.trim()}
+                            alt="Preview"
+                            className="max-h-36 mx-auto rounded-lg object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex justify-end gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowAttachModal(false)}
+                          className="px-3 py-2 text-xs font-semibold text-[#667781] hover:bg-[#F0F2F5] rounded-xl cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={!imageUrlInput.trim()}
+                          className="px-4 py-2 bg-[#00A884] hover:bg-[#075E54] text-white text-xs font-semibold rounded-xl cursor-pointer disabled:opacity-50 transition"
+                        >
+                          Attach Photo
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* LIGHTBOX MODAL: FULL RESOLUTION PHOTO VIEW */}
+            {lightboxUrl && (
+              <div
+                onClick={() => setLightboxUrl(null)}
+                className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-xs cursor-pointer animate-in fade-in"
+              >
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative max-w-4xl max-h-[90vh] bg-black rounded-xl overflow-hidden shadow-2xl flex flex-col items-center cursor-default"
+                >
+                  <button
+                    onClick={() => setLightboxUrl(null)}
+                    className="absolute top-3 right-3 z-10 p-2 bg-black/70 hover:bg-black text-white rounded-full transition cursor-pointer"
+                    title="Close"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  <img
+                    src={lightboxUrl}
+                    alt="WhatsApp full preview"
+                    className="max-h-[85vh] max-w-[90vw] object-contain rounded-lg"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center p-8 text-center text-[#667781]">

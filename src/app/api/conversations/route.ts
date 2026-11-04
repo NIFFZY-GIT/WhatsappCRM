@@ -10,7 +10,7 @@ import {
   deleteConversation,
   clearAllConversations,
 } from '@/lib/store';
-import { sendWhatsAppTextMessage, formatPhoneNumber } from '@/lib/whatsapp';
+import { sendWhatsAppTextMessage, sendWhatsAppImageMessage, formatPhoneNumber } from '@/lib/whatsapp';
 
 export async function GET(req: NextRequest) {
   try {
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { phone, text, mode, action, tenantId } = body;
+    const { phone, text, mode, action, tenantId, imageUrl, mediaId, mediaPreviewUrl } = body;
 
     if (!phone) {
       return NextResponse.json(
@@ -77,28 +77,53 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, contact: updated });
     }
 
-    // Otherwise it's an agent manual message
-    if (!text || !text.trim()) {
+    // Validation: Require either text or an image
+    const hasImage = Boolean(imageUrl || mediaId);
+    const hasText = Boolean(text && text.trim());
+
+    if (!hasImage && !hasText) {
       return NextResponse.json(
-        { success: false, error: 'Message text required' },
+        { success: false, error: 'Message text or image required' },
         { status: 400 }
       );
     }
 
-    const waResult = await sendWhatsAppTextMessage(
-      cleanPhone,
-      text.trim(),
-      {
-        token: tenant?.whatsappToken,
-        phoneNumberId: tenant?.phoneNumberId,
-      }
-    );
+    let waResult;
+    const finalCaption = text?.trim() || '';
+
+    if (hasImage) {
+      // Send image message via WhatsApp Cloud API
+      waResult = await sendWhatsAppImageMessage(
+        cleanPhone,
+        {
+          link: imageUrl,
+          id: mediaId,
+          caption: finalCaption,
+        },
+        {
+          token: tenant?.whatsappToken,
+          phoneNumberId: tenant?.phoneNumberId,
+        }
+      );
+    } else {
+      // Send plain text message via WhatsApp Cloud API
+      waResult = await sendWhatsAppTextMessage(
+        cleanPhone,
+        finalCaption,
+        {
+          token: tenant?.whatsappToken,
+          phoneNumberId: tenant?.phoneNumberId,
+        }
+      );
+    }
 
     const message = await addMessage({
       tenantId: tenant?.id,
       contactPhone: cleanPhone,
       sender: 'agent',
-      text: text.trim(),
+      text: finalCaption,
+      mediaUrl: hasImage ? (imageUrl || mediaPreviewUrl || '') : undefined,
+      mediaType: hasImage ? 'image' : undefined,
       status: waResult.success ? 'sent' : 'failed',
       waMessageId: waResult.messageId,
       error: waResult.error,

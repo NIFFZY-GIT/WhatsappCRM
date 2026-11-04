@@ -87,10 +87,21 @@ export async function POST(req: NextRequest) {
     // Mark as read in WhatsApp
     markWhatsAppMessageAsRead(waMessageId).catch(() => {});
 
-    // Parse incoming text
+    // Parse incoming text or media
     let incomingText = '';
+    let incomingMediaUrl: string | undefined = undefined;
+    let incomingMediaType: 'image' | undefined = undefined;
+
     if (incomingMsg.type === 'text') {
       incomingText = incomingMsg.text?.body || '';
+    } else if (incomingMsg.type === 'image') {
+      incomingMediaType = 'image';
+      const mediaId = incomingMsg.image?.id;
+      if (mediaId) {
+        incomingMediaUrl = `/api/media?id=${mediaId}&tenantId=${tenant.id}`;
+      }
+      const caption = incomingMsg.image?.caption?.trim();
+      incomingText = caption ? `[Photo attached]: ${caption}` : '[Customer shared a photo]';
     } else if (incomingMsg.type === 'button') {
       incomingText = incomingMsg.button?.text || '';
     } else if (incomingMsg.type === 'interactive') {
@@ -121,6 +132,8 @@ export async function POST(req: NextRequest) {
       contactPhone: customerPhone,
       sender: 'customer',
       text: incomingText,
+      mediaUrl: incomingMediaUrl,
+      mediaType: incomingMediaType,
       status: 'delivered',
       waMessageId,
     });
