@@ -152,10 +152,7 @@ export default function LoginPage() {
               <span className="text-xs font-semibold uppercase tracking-wider text-[#00A884]">
                 ZEVARONE CLOUD CRM
               </span>
-              <span className="flex items-center gap-1 text-[11px] bg-[#202C33] text-[#AEBAC1] px-2.5 py-1 rounded-full">
-                <CreditCard className="w-3 h-3 text-[#00A884]" />
-                5,000 LKR / month
-              </span>
+          
             </div>
             <h2 className="text-xl font-bold">
               {mode === 'signin' ? 'Sign in to your CRM workspace' : 'Launch your WhatsApp Business CRM'}
