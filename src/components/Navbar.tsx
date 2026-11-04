@@ -38,15 +38,11 @@ export default function Navbar({ showLinks = true }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[70px] flex items-center justify-between">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="h-10 w-10 rounded-xl bg-[#008069] flex items-center justify-center text-white font-bold text-lg shadow-sm transition group-hover:bg-[#075E54] group-hover:rotate-[-4deg]">
-            W
-          </div>
-          <div className="leading-tight">
-            <span className="font-extrabold text-base tracking-tight text-[#111B21]">ZEVARONE</span>
-            <p className="text-[11px] text-[#54656F] font-medium flex items-center gap-1">
-              WhatsApp AI CRM
-            </p>
-          </div>
+          <img
+            src="/zevaroneassets/Asset 22.png"
+            alt="ZEVARONE"
+            className="h-8 sm:h-9 w-auto object-contain transition group-hover:opacity-90"
+          />
         </Link>
 
         {/* Desktop Nav Links */}
