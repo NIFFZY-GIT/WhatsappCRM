@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { loadStripe, Stripe, StripeCardElement } from '@stripe/stripe-js';
 import {
   CreditCard,
   CheckCircle2,
@@ -27,6 +28,9 @@ import {
   RotateCcw,
   XCircle,
   FileText,
+  Download,
+  Lock,
+  Receipt,
 } from 'lucide-react';
 
 function BillingContent() {
@@ -51,6 +55,38 @@ function BillingContent() {
     billingInterval?: 'monthly' | 'annual';
   } | null>(null);
 
+  // Invoices & Billing History
+  interface InvoiceItem {
+    id: string;
+    number: string;
+    date: string;
+    amountLkr: number;
+    status: string;
+    planName: string;
+    hostedInvoiceUrl?: string;
+    invoicePdf?: string;
+    periodEnd?: string;
+  }
+  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+
+  // On-Site Embedded Payment State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [stripeInstance, setStripeInstance] = useState<Stripe | null>(null);
+  const [cardElement, setCardElement] = useState<StripeCardElement | null>(null);
+  const [cardholderName, setCardholderName] = useState('');
+  const [cardError, setCardError] = useState('');
+  const [setupClientSecret, setSetupClientSecret] = useState('');
+  const [modalLoading, setModalLoading] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+
+  const stripePromise = useMemo(() => {
+    const pk =
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
+      'pk_test_51TLPA15NlWVfmR9p6Dwy1zYZ4SfcYzrbQoViPjQjIfMmgn03pf2SXsYPINJvPkPymv5BOnZxs65Kxxw6Vy4OuZG500QRtDULKg';
+    return loadStripe(pk);
+  }, []);
+
   const fetchBillingStatus = async () => {
     if (!currentUser) return;
     setLoadingStatus(true);
@@ -70,11 +106,183 @@ function BillingContent() {
     }
   };
 
+  const fetchInvoices = async () => {
+    if (!currentUser) return;
+    setLoadingInvoices(true);
+    try {
+      const res = await fetch(`/api/stripe/history?email=${encodeURIComponent(currentUser.email)}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.invoices)) {
+        setInvoices(data.invoices);
+      }
+    } catch (e) {
+      console.warn('Failed to load invoice history:', e);
+    } finally {
+      setLoadingInvoices(false);
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       fetchBillingStatus();
+      fetchInvoices();
     }
   }, [currentUser]);
+
+  const handleOpenOnSitePayment = async () => {
+    if (!currentUser) {
+      notify({
+        type: 'warning',
+        title: 'Sign In Required',
+        message: 'Please sign in or register your business account before adding a payment card.',
+      });
+      router.push('/login');
+      return;
+    }
+    setShowPaymentModal(true);
+    setCardError('');
+    setModalLoading(true);
+
+    try {
+      // 1. Get SetupIntent clientSecret from server
+      const res = await fetch('/api/stripe/create-setup-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentUser.email }),
+      });
+      const data = await res.json();
+      if (!data.success || !data.clientSecret) {
+        throw new Error(data.error || 'Failed to initiate secure card gateway.');
+      }
+      setSetupClientSecret(data.clientSecret);
+
+      // 2. Load Stripe & mount card element
+      const stripe = await stripePromise;
+      if (!stripe) throw new Error('Stripe.js failed to load.');
+      setStripeInstance(stripe);
+
+      // Ensure DOM is ready for #card-element
+      setTimeout(() => {
+        const mountPoint = document.getElementById('card-element');
+        if (mountPoint && !mountPoint.hasChildNodes()) {
+          const elements = stripe.elements();
+          const card = elements.create('card', {
+            style: {
+              base: {
+                fontSize: '15px',
+                color: '#111B21',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                '::placeholder': { color: '#8696A0' },
+              },
+              invalid: {
+                color: '#EF4444',
+                iconColor: '#EF4444',
+              },
+            },
+          });
+          card.mount('#card-element');
+          card.on('change', (event) => {
+            if (event.error) {
+              setCardError(event.error.message);
+            } else {
+              setCardError('');
+            }
+          });
+          setCardElement(card);
+        }
+      }, 150);
+    } catch (err: any) {
+      setCardError(err.message || 'Error initializing card form.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleConfirmOnSitePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripeInstance || !cardElement || !setupClientSecret) {
+      setCardError('Card gateway is still initializing. Please wait a moment.');
+      return;
+    }
+
+    setProcessingPayment(true);
+    setCardError('');
+
+    try {
+      // 1. Confirm Card Setup with Stripe directly (Card details stay strictly with Stripe)
+      const { setupIntent, error: setupError } = await stripeInstance.confirmCardSetup(
+        setupClientSecret,
+        {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: cardholderName.trim() || currentUser?.name || 'Valued Client',
+              email: currentUser?.email,
+            },
+          },
+        }
+      );
+
+      if (setupError) {
+        throw new Error(setupError.message || 'Card verification failed.');
+      }
+
+      if (!setupIntent?.payment_method) {
+        throw new Error('Payment method could not be saved.');
+      }
+
+      const pmId =
+        typeof setupIntent.payment_method === 'string'
+          ? setupIntent.payment_method
+          : setupIntent.payment_method.id;
+
+      // 2. Charge card and activate subscription on server
+      const chargeRes = await fetch('/api/stripe/subscribe-embedded', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethodId: pmId,
+          billingInterval,
+          email: currentUser?.email,
+        }),
+      });
+
+      const chargeData = await chargeRes.json();
+      if (!chargeRes.ok || !chargeData.success) {
+        throw new Error(chargeData.error || 'Card charge failed.');
+      }
+
+      // 3. Handle 3D Secure / SCA authentication if required by bank
+      if (chargeData.requiresAction && chargeData.clientSecret) {
+        const { error: actionError } = await stripeInstance.confirmCardPayment(chargeData.clientSecret);
+        if (actionError) {
+          throw new Error(actionError.message || '3D Secure bank authorization failed.');
+        }
+      }
+
+      // Success!
+      setShowPaymentModal(false);
+      setSuccessBanner(true);
+      setStatusMessage(
+        `Payment successful! Your card has been saved and your ${
+          billingInterval === 'annual' ? 'Annual Pro (54,000 LKR)' : 'Monthly Pro (5,000 LKR)'
+        } subscription is now active with auto-renewal.`
+      );
+      notify({
+        type: 'success',
+        title: 'Payment Successful! 🎉',
+        message: 'Your Pro subscription is now active. Card saved for auto-renewal.',
+      });
+
+      await fetchBillingStatus();
+      await fetchInvoices();
+      await refreshData();
+    } catch (err: any) {
+      setCardError(err.message || 'Payment processing failed.');
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
 
   // Handle return from Stripe checkout
   useEffect(() => {
@@ -522,12 +730,12 @@ function BillingContent() {
 
             <button
               type="button"
-              onClick={handlePayWithStripe}
-              disabled={loading}
+              onClick={handleOpenOnSitePayment}
+              disabled={loading || modalLoading}
               className="px-5 py-2.5 bg-[#008069] hover:bg-[#075E54] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shrink-0 shadow-sm"
             >
               <CreditCard className="w-4 h-4" />
-              Add Card &amp; Pay 5,000 LKR
+              Add Card &amp; Pay {isAnnual ? '54,000' : '5,000'} LKR On-Site
             </button>
           </div>
         )}
@@ -675,25 +883,36 @@ function BillingContent() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
                 <button
                   type="button"
-                  onClick={handlePayWithStripe}
-                  disabled={loading}
+                  onClick={handleOpenOnSitePayment}
+                  disabled={loading || modalLoading}
                   className="w-full sm:w-auto px-6 py-3 bg-[#008069] hover:bg-[#075E54] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
                 >
-                  {loading ? (
+                  {modalLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4" />
                       {isActive && hasCard
-                        ? 'Switch Plan or Renew'
+                        ? 'Update Card / Switch Plan'
                         : isAnnual
-                        ? 'Pay 54,000 LKR (Annual - Save 10%)'
-                        : 'Pay 5,000 LKR (30-Day Recurring)'}
+                        ? 'Pay 54,000 LKR On-Site'
+                        : 'Pay 5,000 LKR On-Site'}
                     </>
                   )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePayWithStripe}
+                  disabled={loading}
+                  title="Pay using Stripe hosted checkout"
+                  className="w-full sm:w-auto px-4 py-3 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl border border-slate-300 transition flex items-center justify-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                  Stripe Checkout Page
                 </button>
               </div>
             </div>
@@ -709,7 +928,7 @@ function BillingContent() {
               Stripe 30-Day Recurring Logic
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              When you subscribe, Stripe securely stores your card on file and automatically charges the renewal fee every 30 days. You can update your payment method or cancel at any time.
+              When you subscribe, your card is securely tokenized via Stripe and automatically charged every 30 days. You can update your payment method or cancel anytime directly from this page.
             </p>
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
               <div className="flex justify-between text-slate-600">
@@ -721,8 +940,8 @@ function BillingContent() {
                 <span className="font-semibold text-slate-900">Every 30 Days (Auto)</span>
               </div>
               <div className="flex justify-between text-slate-600">
-                <span>Card Update:</span>
-                <span className="font-semibold text-slate-900">Anytime via Stripe Portal</span>
+                <span>On-Site Card Entry:</span>
+                <span className="font-semibold text-emerald-700">100% On-Page (No Redirect)</span>
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Cancellation:</span>
@@ -741,7 +960,7 @@ function BillingContent() {
                 className="w-full text-center text-xs text-[#008069] hover:underline font-semibold flex items-center justify-center gap-1 pt-1"
               >
                 <FileText className="w-3.5 h-3.5" />
-                View Invoices &amp; Receipts
+                Manage Card on Stripe Customer Portal
               </button>
             )}
           </div>
@@ -774,6 +993,253 @@ function BillingContent() {
           </div>
         </div>
       </div>
+
+      {/* ==================== SECTION: PAYMENT HISTORY & TAX INVOICES ==================== */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#008069] flex items-center justify-center shrink-0 border border-emerald-100">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">Payment History &amp; Official Invoices</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Download tax invoice receipts and view real-time payment audit trails processed via Stripe.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={fetchInvoices}
+            disabled={loadingInvoices}
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 self-start sm:self-auto"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loadingInvoices ? 'animate-spin text-[#008069]' : ''}`} />
+            Refresh History
+          </button>
+        </div>
+
+        {loadingInvoices ? (
+          <div className="p-8 text-center text-slate-500 text-xs flex flex-col items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-[#008069]" />
+            Loading invoices from Stripe ledger...
+          </div>
+        ) : invoices.length === 0 ? (
+          <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-xs font-bold text-slate-700">No Invoices Found Yet</p>
+            <p className="text-[11px] text-slate-500 mt-1 max-w-md mx-auto">
+              Once your first monthly or annual subscription fee is processed, your official PDF invoices and payment receipts will appear here automatically.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50/70">
+                  <th className="py-3 px-4 rounded-l-lg">Invoice #</th>
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Description</th>
+                  <th className="py-3 px-4">Amount</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right rounded-r-lg">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {invoices.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-slate-50/80 transition">
+                    <td className="py-3 px-4 font-mono font-semibold text-slate-900">
+                      {inv.number || inv.id.slice(0, 16)}
+                    </td>
+                    <td className="py-3 px-4 text-slate-600">
+                      {inv.date ? new Date(inv.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}
+                    </td>
+                    <td className="py-3 px-4 text-slate-800 font-medium">
+                      {inv.planName}
+                    </td>
+                    <td className="py-3 px-4 font-bold text-slate-900">
+                      {inv.amountLkr.toLocaleString()} LKR
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                          inv.status === 'paid'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            : inv.status === 'open'
+                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {inv.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right space-x-2">
+                      {inv.invoicePdf && (
+                        <a
+                          href={inv.invoicePdf}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold transition shadow-2xs"
+                          title="Download official PDF receipt"
+                        >
+                          <Download className="w-3 h-3 text-[#008069]" />
+                          PDF
+                        </a>
+                      )}
+                      {inv.hostedInvoiceUrl && (
+                        <a
+                          href={inv.hostedInvoiceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#008069] hover:bg-[#075E54] text-white rounded-lg text-[11px] font-semibold transition shadow-2xs"
+                          title="View receipt on Stripe"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          View Receipt
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* ==================== ON-SITE EMBEDDED PAYMENT MODAL ==================== */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="bg-[#111B21] text-white px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#00A884] flex items-center justify-center font-bold">
+                  <CreditCard className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-white">Secure On-Site Card Payment</h3>
+                  <p className="text-[11px] text-[#8696A0]">256-bit SSL encrypted &bull; Powered by Stripe</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!processingPayment) setShowPaymentModal(false);
+                }}
+                disabled={processingPayment}
+                className="text-[#8696A0] hover:text-white text-lg font-bold p-1 transition"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleConfirmOnSitePayment} className="p-6 space-y-4">
+              {/* Order Summary Box */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                <div className="flex justify-between items-center text-slate-600">
+                  <span>Selected Subscription:</span>
+                  <span className="font-bold text-slate-900">
+                    {billingInterval === 'annual' ? 'WhatsApp CRM Pro (Annual Tier)' : 'WhatsApp CRM Pro (Monthly Tier)'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-slate-600">
+                  <span>Recurring Billing Cycle:</span>
+                  <span className="font-semibold text-emerald-700">
+                    {billingInterval === 'annual' ? 'Charged 54,000 LKR every 365 days' : 'Charged 5,000 LKR every 30 days'}
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                  <span className="font-bold text-slate-900">Amount Due Today:</span>
+                  <span className="text-lg font-extrabold text-[#008069]">
+                    {billingInterval === 'annual' ? '54,000 LKR' : '5,000 LKR'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Cardholder Name */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Cardholder Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={cardholderName}
+                  onChange={(e) => setCardholderName(e.target.value)}
+                  placeholder="e.g. Nipuna Dasun"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#008069] focus:bg-white transition"
+                />
+              </div>
+
+              {/* Stripe Card Element Container */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Debit or Credit Card
+                  </label>
+                  <div className="flex items-center gap-1 text-[10px] text-slate-400 font-semibold">
+                    <span>Visa</span> &bull; <span>Mastercard</span> &bull; <span>Amex</span>
+                  </div>
+                </div>
+
+                <div
+                  id="card-element"
+                  className="p-3.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 min-h-[44px] transition focus-within:ring-2 focus-within:ring-[#008069] focus-within:bg-white"
+                />
+              </div>
+
+              {/* Card Error Display */}
+              {cardError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span className="leading-snug">{cardError}</span>
+                </div>
+              )}
+
+              {/* Security Footnote */}
+              <div className="flex items-center gap-2 text-[11px] text-slate-500 pt-1">
+                <Lock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>
+                  Your raw card details never touch our servers. Tokenized directly by Stripe with PCI-DSS Level 1 compliance.
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(false)}
+                  disabled={processingPayment}
+                  className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={processingPayment}
+                  className="px-6 py-2.5 bg-[#008069] hover:bg-[#075E54] text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-sm disabled:opacity-50"
+                >
+                  {processingPayment ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Authorizing with Stripe...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-3.5 h-3.5" />
+                      Confirm &amp; Pay {billingInterval === 'annual' ? '54,000 LKR' : '5,000 LKR'}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
