@@ -108,15 +108,18 @@ export default function Sidebar() {
     <>
       {/* Mobile Top Header */}
       <div className="lg:hidden bg-[#111B21] text-[#E9EDEF] px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-[#2A3942]">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#25D366] flex items-center justify-center font-bold text-[#111B21]">
-            <Sparkles className="w-4 h-4 text-[#111B21]" />
+        <Link href="/" className="flex items-center gap-2">
+          <div className="bg-white px-2.5 py-1.5 rounded-lg flex items-center shadow-xs">
+            <img
+              src="/zevaroneassets/Asset 22.png"
+              alt="ZEVARONE. CRM"
+              className="h-5 w-auto object-contain"
+            />
           </div>
-          <div>
-            <h1 className="font-bold text-sm tracking-tight leading-none text-white">ZEVARONE. CRM</h1>
-            <p className="text-[10px] text-[#25D366] font-medium">WhatsApp Cloud Platform</p>
-          </div>
-        </div>
+          <span className="text-[9px] bg-[#00A884]/20 text-[#25D366] font-bold px-1.5 py-0.5 rounded border border-[#00A884]/40">
+            Pro
+          </span>
+        </Link>
 
         <button
           onClick={() => setIsMobileOpen(!isMobileOpen)}
@@ -142,21 +145,19 @@ export default function Sidebar() {
         }`}
       >
         {/* Brand Header */}
-        <div className="p-5 border-b border-[#2A3942] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#25D366] flex items-center justify-center font-black text-[#111B21]">
-              <Sparkles className="w-5 h-5" />
+        <div className="p-4 border-b border-[#2A3942] flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="bg-white px-3 py-2 rounded-xl flex items-center shadow-xs transition group-hover:bg-slate-50">
+              <img
+                src="/zevaroneassets/Asset 22.png"
+                alt="ZEVARONE. CRM"
+                className="h-6 w-auto object-contain"
+              />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="font-extrabold text-base tracking-tight text-white">ZEVARONE. CRM</h1>
-                <span className="text-[9px] bg-[#00A884]/20 text-[#25D366] font-bold px-1.5 py-0.5 rounded border border-[#00A884]/40">
-                  Pro
-                </span>
-              </div>
-              <p className="text-[11px] text-[#8696A0]">WhatsApp Cloud &amp; Sales AI</p>
-            </div>
-          </div>
+            <span className="text-[9px] bg-[#00A884]/20 text-[#25D366] font-bold px-1.5 py-0.5 rounded border border-[#00A884]/40 shrink-0">
+              Pro
+            </span>
+          </Link>
 
           <button
             onClick={() => setIsMobileOpen(false)}
