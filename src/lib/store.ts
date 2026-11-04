@@ -128,33 +128,56 @@ function saveLocalStore(data: StoreData): void {
 
 /* ==================== TENANTS (CLIENT BUSINESSES) ==================== */
 
+export function parseTenantRow(t: any): Tenant {
+  let automatedTemplate = t.automated_template || t.automatedTemplate || '';
+  let welcomeMedia = t.welcome_media || t.welcomeMedia || [];
+  let sendWelcomeMedia = t.send_welcome_media ?? t.sendWelcomeMedia ?? (welcomeMedia.length > 0);
+
+  if (automatedTemplate.startsWith('__WELCOME_MEDIA__:')) {
+    try {
+      const newlineIdx = automatedTemplate.indexOf('\n\n');
+      if (newlineIdx !== -1) {
+        const jsonStr = automatedTemplate.substring('__WELCOME_MEDIA__:'.length, newlineIdx);
+        const parsed = JSON.parse(jsonStr);
+        welcomeMedia = parsed.media || [];
+        sendWelcomeMedia = parsed.enabled ?? true;
+        automatedTemplate = automatedTemplate.substring(newlineIdx + 2);
+      }
+    } catch (e) {}
+  }
+
+  return {
+    id: t.id,
+    name: t.name,
+    slug: t.slug,
+    whatsappNumber: t.whatsapp_number || t.whatsappNumber || '',
+    phoneNumberId: t.phone_number_id || t.phoneNumberId || '',
+    whatsappToken: t.whatsapp_token || t.whatsappToken || '',
+    geminiApiKey: t.gemini_api_key || t.geminiApiKey || '',
+    geminiSystemPrompt: t.gemini_system_prompt || t.geminiSystemPrompt || '',
+    automatedTemplate,
+    defaultMode: t.default_mode || t.defaultMode || 'ai_chatbot',
+    welcomeMedia,
+    sendWelcomeMedia,
+    createdAt: t.created_at || t.createdAt,
+    isActive: t.is_active ?? t.isActive ?? true,
+  };
+}
+
 export async function getTenants(): Promise<Tenant[]> {
   const supabase = getSupabase();
   if (supabase) {
     try {
       const { data, error } = await supabase.from('tenants').select('*').order('created_at', { ascending: true });
       if (!error && data && data.length > 0) {
-        return data.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          slug: t.slug,
-          whatsappNumber: t.whatsapp_number,
-          phoneNumberId: t.phone_number_id,
-          whatsappToken: t.whatsapp_token,
-          geminiApiKey: t.gemini_api_key,
-          geminiSystemPrompt: t.gemini_system_prompt,
-          automatedTemplate: t.automated_template,
-          defaultMode: t.default_mode,
-          createdAt: t.created_at,
-          isActive: t.is_active,
-        }));
+        return data.map(parseTenantRow);
       }
     } catch (e) {
       console.warn('Supabase getTenants error, using local fallback:', e);
     }
   }
   const local = ensureLocalStore();
-  return local.tenants;
+  return local.tenants.map(parseTenantRow);
 }
 
 export async function getTenant(idOrSlug: string): Promise<Tenant | undefined> {
@@ -179,6 +202,16 @@ export async function upsertTenant(tenantData: Partial<Tenant> & { name: string 
   const id = tenantData.id || 'tenant_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
   const now = new Date().toISOString();
 
+  // Encode welcomeMedia into automated_template for persistent multi-platform storage
+  let storedAutomatedTemplate = tenantData.automatedTemplate || `Hello {{name}}! Welcome to ${tenantData.name}.`;
+  if (tenantData.welcomeMedia && tenantData.welcomeMedia.length > 0) {
+    const metaHeader = `__WELCOME_MEDIA__:${JSON.stringify({
+      media: tenantData.welcomeMedia,
+      enabled: tenantData.sendWelcomeMedia ?? true,
+    })}\n\n`;
+    storedAutomatedTemplate = metaHeader + storedAutomatedTemplate;
+  }
+
   const supabase = getSupabase();
   if (supabase) {
     try {
@@ -191,7 +224,7 @@ export async function upsertTenant(tenantData: Partial<Tenant> & { name: string 
         whatsapp_token: tenantData.whatsappToken || '',
         gemini_api_key: tenantData.geminiApiKey || '',
         gemini_system_prompt: tenantData.geminiSystemPrompt || `You are the helpful AI assistant for ${tenantData.name}.`,
-        automated_template: tenantData.automatedTemplate || `Hello {{name}}! Welcome to ${tenantData.name}.`,
+        automated_template: storedAutomatedTemplate,
         default_mode: tenantData.defaultMode || 'ai_chatbot',
         is_active: tenantData.isActive ?? true,
       };
@@ -216,6 +249,8 @@ export async function upsertTenant(tenantData: Partial<Tenant> & { name: string 
     geminiSystemPrompt: tenantData.geminiSystemPrompt || `You are the helpful AI assistant for ${tenantData.name}.`,
     automatedTemplate: tenantData.automatedTemplate || `Hello {{name}}! Welcome to ${tenantData.name}.`,
     defaultMode: tenantData.defaultMode || 'ai_chatbot',
+    welcomeMedia: tenantData.welcomeMedia || [],
+    sendWelcomeMedia: tenantData.sendWelcomeMedia ?? true,
     createdAt: now,
     isActive: tenantData.isActive ?? true,
   };

@@ -54,6 +54,38 @@ export async function POST(req: NextRequest) {
     });
 
     const activeMode = contact.mode || tenant?.defaultMode || settings.defaultMode;
+
+    // Check if this is the customer's first message ever
+    const fullHistory = await getMessagesForContact(cleanPhone, tenant?.id);
+    const isFirstContact = fullHistory.length <= 1;
+
+    // Send admin-configured welcome media if enabled
+    if (
+      isFirstContact &&
+      tenant?.sendWelcomeMedia &&
+      tenant?.welcomeMedia &&
+      tenant.welcomeMedia.length > 0
+    ) {
+      for (const item of tenant.welcomeMedia) {
+        if (!item.url) continue;
+        const personalizedCaption = (item.caption || '')
+          .replace(/\{\{name\}\}/gi, contact.name)
+          .replace(/\{\{phone\}\}/gi, cleanPhone)
+          .replace(/\{\{businessName\}\}/gi, tenant?.name || settings.businessName);
+
+        await addMessage({
+          tenantId: tenant?.id,
+          contactPhone: cleanPhone,
+          sender: 'bot',
+          mode: activeMode,
+          text: personalizedCaption || '[Welcome photo delivered]',
+          mediaUrl: item.url,
+          mediaType: 'image',
+          status: 'sent',
+        });
+      }
+    }
+
     let botReplyText = '';
 
     let aiError: string | undefined;

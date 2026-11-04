@@ -1,5 +1,11 @@
 export type BotMode = 'automated' | 'ai_chatbot';
 
+export interface WelcomeMediaItem {
+  id: string;
+  url: string;
+  caption?: string;
+}
+
 export interface ProductItem {
   id: string;
   tenantId: string;
@@ -21,6 +27,8 @@ export interface Tenant {
   geminiSystemPrompt: string;
   automatedTemplate: string;
   defaultMode: BotMode;
+  welcomeMedia?: WelcomeMediaItem[];
+  sendWelcomeMedia?: boolean;
   createdAt: string;
   isActive: boolean;
 }
@@ -68,6 +76,8 @@ export interface AppSettings {
   geminiSystemPrompt: string;
   geminiModel: string;
   autoReplyEnabled: boolean;
+  welcomeMedia?: WelcomeMediaItem[];
+  sendWelcomeMedia?: boolean;
 }
 
 export interface WhatsAppSendResult {

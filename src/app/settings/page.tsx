@@ -9,8 +9,15 @@ import {
   Phone,
   Building2,
   Check,
+  Image as ImageIcon,
+  Plus,
+  Trash2,
+  UploadCloud,
+  Loader2,
+  Layers,
+  HelpCircle,
 } from 'lucide-react';
-import { BotMode } from '@/lib/types';
+import { BotMode, WelcomeMediaItem } from '@/lib/types';
 import { useApp } from '@/context/AppContext';
 
 export default function SettingsPage() {
@@ -23,6 +30,9 @@ export default function SettingsPage() {
   const [editDefaultMode, setEditDefaultMode] = useState<BotMode>('ai_chatbot');
   const [editTemplate, setEditTemplate] = useState('');
   const [editGeminiPrompt, setEditGeminiPrompt] = useState('');
+  const [editWelcomeMedia, setEditWelcomeMedia] = useState<WelcomeMediaItem[]>([]);
+  const [editSendWelcomeMedia, setEditSendWelcomeMedia] = useState(true);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
 
@@ -35,8 +45,82 @@ export default function SettingsPage() {
       setEditDefaultMode(selectedTenant.defaultMode || 'ai_chatbot');
       setEditTemplate(selectedTenant.automatedTemplate || '');
       setEditGeminiPrompt(selectedTenant.geminiSystemPrompt || '');
+      setEditWelcomeMedia(selectedTenant.welcomeMedia || []);
+      setEditSendWelcomeMedia(selectedTenant.sendWelcomeMedia ?? true);
     }
   }, [selectedTenant]);
+
+  const handleAddWelcomeMedia = () => {
+    setEditWelcomeMedia((prev) => [
+      ...prev,
+      {
+        id: 'wm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        url: '',
+        caption: '',
+      },
+    ]);
+  };
+
+  const handleUpdateWelcomeMedia = (index: number, field: 'url' | 'caption', val: string) => {
+    setEditWelcomeMedia((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: val } : item))
+    );
+  };
+
+  const handleRemoveWelcomeMedia = (index: number) => {
+    setEditWelcomeMedia((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadFileForWelcome = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedTenant) return;
+
+    if (!file.type.startsWith('image/')) {
+      notify({
+        type: 'error',
+        title: 'Invalid File',
+        message: 'Please choose an image file (PNG, JPG, WEBP).',
+      });
+      return;
+    }
+
+    setUploadingIndex(index);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('tenantId', selectedTenant.id);
+
+      const res = await fetch('/api/upload-media', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success && (data.previewUrl || data.mediaId)) {
+        // Use the base64 or public data URL as the persistent link
+        handleUpdateWelcomeMedia(index, 'url', data.previewUrl || '');
+        notify({
+          type: 'success',
+          title: 'Photo Uploaded',
+          message: 'Image ready for welcome message sequence.',
+        });
+      } else {
+        notify({
+          type: 'error',
+          title: 'Upload Failed',
+          message: data.error || 'Failed to process image upload.',
+        });
+      }
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Upload Error',
+        message: err.message || 'Network error uploading photo.',
+      });
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +142,8 @@ export default function SettingsPage() {
           geminiSystemPrompt: editGeminiPrompt,
           phoneNumberId: editPhoneId,
           whatsappToken: editToken,
+          welcomeMedia: editWelcomeMedia,
+          sendWelcomeMedia: editSendWelcomeMedia,
         }),
       });
 
@@ -230,6 +316,163 @@ export default function SettingsPage() {
               Available variables: <code className="text-[#075E54] bg-[#D9FDD3] px-1 py-0.5 rounded">{'{{name}}'}</code>,{' '}
               <code className="text-[#075E54] bg-[#D9FDD3] px-1 py-0.5 rounded">{'{{businessName}}'}</code>.
             </p>
+          </div>
+
+          {/* Welcome Media Section (First Message Multiple Photos & Captions) */}
+          <div className="p-5 rounded-2xl border border-[#E9EDEF] bg-[#F0F2F5]/50 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-[#075E54]" />
+                  <h3 className="font-bold text-[#111B21] text-sm">
+                    First Message Welcome Photos &amp; Captions
+                  </h3>
+                  <span className="text-[10px] font-bold bg-[#D9FDD3] text-[#075E54] px-2 py-0.5 rounded-full border border-[#25D366]/30">
+                    Multiple Media Supported
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#667781] mt-0.5">
+                  When a customer contacts your business for the first time, these photos will automatically be delivered in sequence with their captions.
+                </p>
+              </div>
+
+              {/* Toggle switch */}
+              <label className="flex items-center gap-2 cursor-pointer select-none self-start sm:self-auto">
+                <input
+                  type="checkbox"
+                  checked={editSendWelcomeMedia}
+                  onChange={(e) => setEditSendWelcomeMedia(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-[#8696A0]/40 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#8696A0] after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#00A884]"></div>
+                <span className="text-xs font-semibold text-[#111B21]">
+                  {editSendWelcomeMedia ? 'Enabled' : 'Disabled'}
+                </span>
+              </label>
+            </div>
+
+            {/* List of welcome media cards */}
+            {editWelcomeMedia.length === 0 ? (
+              <div className="text-center py-6 border-2 border-dashed border-[#8696A0]/30 rounded-xl bg-white/70">
+                <ImageIcon className="w-8 h-8 text-[#8696A0] mx-auto mb-2 opacity-50" />
+                <p className="text-xs font-medium text-[#111B21]">No welcome photos configured yet.</p>
+                <p className="text-[11px] text-[#667781] mt-0.5">
+                  Click below to add a welcome brochure, product flyer, or showroom photo!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {editWelcomeMedia.map((item, idx) => (
+                  <div
+                    key={item.id || idx}
+                    className="p-4 bg-white border border-[#E9EDEF] rounded-xl shadow-2xs space-y-3"
+                  >
+                    <div className="flex items-center justify-between pb-2 border-b border-[#E9EDEF]">
+                      <span className="text-xs font-bold text-[#075E54] flex items-center gap-1.5">
+                        <span className="w-5 h-5 rounded-full bg-[#D9FDD3] text-[#075E54] flex items-center justify-center text-[10px]">
+                          {idx + 1}
+                        </span>
+                        Welcome Photo #{idx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveWelcomeMedia(idx)}
+                        className="text-[#667781] hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition cursor-pointer"
+                        title="Remove photo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Image Preview & Upload */}
+                      <div className="space-y-2">
+                        <label className="block text-[11px] font-semibold text-[#111B21]">
+                          Photo Image
+                        </label>
+                        <div className="h-28 rounded-lg overflow-hidden border border-[#E9EDEF] bg-[#F0F2F5] relative flex items-center justify-center group">
+                          {item.url ? (
+                            <img
+                              src={item.url}
+                              alt="Welcome Photo"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-center p-2 text-[#8696A0]">
+                              <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                              <span className="text-[10px]">No image set</span>
+                            </div>
+                          )}
+
+                          {uploadingIndex === idx && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[10px] gap-1.5">
+                              <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
+                            </div>
+                          )}
+                        </div>
+
+                        {/* File Upload Button */}
+                        <label className="w-full py-1.5 px-3 bg-[#E9EDEF] hover:bg-[#8696A0]/20 rounded-lg text-[11px] font-semibold text-[#111B21] flex items-center justify-center gap-1.5 cursor-pointer transition">
+                          <UploadCloud className="w-3.5 h-3.5 text-[#075E54]" />
+                          <span>Upload from Device</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleUploadFileForWelcome(idx, e)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+
+                      {/* Image URL & Caption Inputs */}
+                      <div className="md:col-span-2 space-y-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#111B21] mb-1">
+                            Direct Image URL (or uploaded link)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="https://example.com/welcome-banner.jpg"
+                            value={item.url}
+                            onChange={(e) => handleUpdateWelcomeMedia(idx, 'url', e.target.value)}
+                            className="w-full px-3 py-2 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] font-mono focus:bg-white focus:border-[#00A884] focus:outline-none transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-[#111B21] mb-1">
+                            Caption for this Photo (Optional)
+                          </label>
+                          <textarea
+                            rows={2}
+                            placeholder="e.g. Welcome {{name}} to {{businessName}}! 💎 Here is our exclusive new collection."
+                            value={item.caption || ''}
+                            onChange={(e) => handleUpdateWelcomeMedia(idx, 'caption', e.target.value)}
+                            className="w-full p-2.5 bg-[#F0F2F5] border border-[#E9EDEF] rounded-xl text-xs text-[#111B21] focus:bg-white focus:border-[#00A884] focus:outline-none transition"
+                          />
+                          <span className="text-[10px] text-[#667781] mt-0.5 block">
+                            Variables: <code className="text-[#075E54] bg-[#D9FDD3] px-1 rounded">{'{{name}}'}</code>, <code className="text-[#075E54] bg-[#D9FDD3] px-1 rounded">{'{{businessName}}'}</code>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Photo Button */}
+            <button
+              type="button"
+              onClick={handleAddWelcomeMedia}
+              className="w-full py-2.5 px-4 border-2 border-dashed border-[#00A884]/40 hover:border-[#00A884] bg-white hover:bg-[#D9FDD3]/20 text-[#075E54] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Another Welcome Photo</span>
+            </button>
           </div>
 
           {/* Gemini AI System Prompt Textarea */}

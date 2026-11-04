@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getWhatsAppConfig,
   sendWhatsAppTextMessage,
+  sendWhatsAppImageMessage,
   markWhatsAppMessageAsRead,
   formatPhoneNumber,
 } from '@/lib/whatsapp';
@@ -143,6 +144,57 @@ export async function POST(req: NextRequest) {
     }
 
     const activeMode = contact.mode || tenant.defaultMode || settings.defaultMode;
+
+    // CHECK IF THIS IS CUSTOMER'S FIRST MESSAGE EVER
+    const fullHistory = await getMessagesForContact(customerPhone, tenant.id);
+    const isFirstContact = fullHistory.length <= 1;
+
+    // SEND ADMIN-CONFIGURED CUSTOM WELCOME MEDIA (MULTIPLE PHOTOS WITH CAPTIONS) ON FIRST MESSAGE
+    if (
+      isFirstContact &&
+      tenant.sendWelcomeMedia &&
+      tenant.welcomeMedia &&
+      tenant.welcomeMedia.length > 0
+    ) {
+      for (const item of tenant.welcomeMedia) {
+        if (!item.url) continue;
+
+        const personalizedCaption = (item.caption || '')
+          .replace(/\{\{name\}\}/gi, customerProfileName)
+          .replace(/\{\{phone\}\}/gi, customerPhone)
+          .replace(/\{\{businessName\}\}/gi, tenant.name);
+
+        const imgSendResult = await sendWhatsAppImageMessage(
+          customerPhone,
+          {
+            link: item.url,
+            caption: personalizedCaption || undefined,
+          },
+          {
+            token: tenant.whatsappToken,
+            phoneNumberId: tenant.phoneNumberId,
+          }
+        );
+
+        await addMessage({
+          tenantId: tenant.id,
+          contactPhone: customerPhone,
+          sender: 'bot',
+          mode: activeMode,
+          text: personalizedCaption || '[Welcome photo delivered]',
+          mediaUrl: item.url,
+          mediaType: 'image',
+          status: imgSendResult.success ? 'sent' : 'failed',
+          waMessageId: imgSendResult.messageId,
+          error: imgSendResult.error,
+        });
+
+        // Small pause between multiple welcome photos to preserve delivery order on WhatsApp
+        if (tenant.welcomeMedia.length > 1) {
+          await new Promise((r) => setTimeout(r, 650));
+        }
+      }
+    }
 
     if (activeMode === 'ai_chatbot') {
       // 1. Fetch conversation history for this tenant
