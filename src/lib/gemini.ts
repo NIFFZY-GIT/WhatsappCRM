@@ -12,16 +12,18 @@ export function getGeminiApiKey(): string {
 
 export function getGeminiModelName(): string {
   const envModel = process.env.GEMINI_MODEL?.trim();
-  if (envModel && envModel !== 'gemini-3.8-flash' && envModel !== 'gemini-2.5-flash') {
+  if (envModel && !envModel.includes('2.5') && !envModel.includes('1.5')) {
     return envModel;
   }
-  return 'gemini-flash-lite-latest';
+  return 'gemini-3.6-flash';
 }
 
 const FALLBACK_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.8-flash',
+  'gemma-4-26b-a4b-it',
   'gemini-flash-lite-latest',
   'gemini-flash-latest',
-  'gemini-2.5-flash-lite',
 ];
 
 /**
