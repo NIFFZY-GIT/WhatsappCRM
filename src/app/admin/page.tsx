@@ -31,6 +31,7 @@ import {
   ArrowRight,
   Loader2,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 
 interface WorkspaceData {
@@ -90,6 +91,8 @@ export default function AdminMonitorPage() {
 
   // Edit Company Modal State
   const [editingWorkspace, setEditingWorkspace] = useState<WorkspaceData | null>(null);
+  const [workspaceToDelete, setWorkspaceToDelete] = useState<WorkspaceData | null>(null);
+  const [isDeletingWorkspace, setIsDeletingWorkspace] = useState(false);
   const [editCompanyName, setEditCompanyName] = useState('');
   const [editCompanyPhone, setEditCompanyPhone] = useState('');
   const [editCompanyPhoneId, setEditCompanyPhoneId] = useState('');
@@ -162,6 +165,39 @@ export default function AdminMonitorPage() {
       });
     } finally {
       setIsSavingCompany(false);
+    }
+  };
+
+  const confirmDeleteWorkspace = async () => {
+    if (!workspaceToDelete) return;
+    setIsDeletingWorkspace(true);
+    try {
+      const res = await fetch(`/api/tenants?id=${workspaceToDelete.tenant.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        setWorkspaceToDelete(null);
+        notify({
+          type: 'success',
+          title: 'Workspace Deleted',
+          message: `${workspaceToDelete.tenant.name} has been permanently deleted.`,
+        });
+        await fetchAdminData();
+        await refreshData();
+      } else {
+        notify({
+          type: 'error',
+          title: 'Delete Failed',
+          message: data.error || 'Failed to delete workspace.',
+        });
+      }
+    } catch (err: any) {
+      notify({
+        type: 'error',
+        title: 'Error',
+        message: err.message || 'Network error deleting workspace.',
+      });
+    } finally {
+      setIsDeletingWorkspace(false);
     }
   };
 
@@ -632,6 +668,16 @@ export default function AdminMonitorPage() {
                               'Grant Pro'
                             )}
                           </button>
+
+                          {/* Delete Workspace Button */}
+                          <button
+                            type="button"
+                            onClick={() => setWorkspaceToDelete(item)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                            title="Delete workspace permanently"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -642,6 +688,47 @@ export default function AdminMonitorPage() {
           </table>
         </div>
       </div>
+
+      {/* Delete Workspace Modal */}
+      {workspaceToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold shrink-0">
+                <Trash2 className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Delete Client Workspace?</h3>
+                <p className="text-xs text-slate-500">Permanent administrator action</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to permanently delete <strong>{workspaceToDelete.tenant.name}</strong>?
+              This will remove the business account, all associated catalogue items, contacts, and message history.
+            </p>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={isDeletingWorkspace}
+                onClick={() => setWorkspaceToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingWorkspace}
+                onClick={confirmDeleteWorkspace}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingWorkspace ? 'Deleting...' : 'Delete Permanently'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MASTER ADMIN: EDIT COMPANY DETAILS MODAL */}
       {editingWorkspace && (

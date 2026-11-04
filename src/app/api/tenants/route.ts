@@ -92,15 +92,12 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    const deleted = await deleteTenant(id);
-    if (!deleted) {
-      return NextResponse.json(
-        { success: false, error: 'Cannot delete the only existing business account' },
-        { status: 400 }
-      );
-    }
+    await deleteTenant(id);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      message: 'Business workspace and associated data deleted successfully.',
+    });
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err.message },

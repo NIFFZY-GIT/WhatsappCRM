@@ -347,18 +347,42 @@ export async function deleteTenant(id: string): Promise<boolean> {
   if (supabase) {
     try {
       await supabase.from('tenants').delete().eq('id', id);
+      await supabase.from('products').delete().eq('tenant_id', id);
+      await supabase.from('contacts').delete().eq('tenant_id', id);
+      await supabase.from('messages').delete().eq('tenant_id', id);
     } catch (e) {
-      console.error(e);
+      console.error('Cloud deleteTenant error:', e);
     }
   }
-  const local = ensureLocalStore();
-  const index = local.tenants.findIndex((t) => t.id === id);
-  if (index >= 0 && local.tenants.length > 1) {
-    local.tenants.splice(index, 1);
-    saveLocalStore(local);
-    return true;
+
+  // Also remove or clean any associated user accounts for this tenant
+  try {
+    const currentUsers = await getUsers();
+    const remainingUsers = currentUsers.filter((u) => u.tenantId !== id);
+    if (remainingUsers.length !== currentUsers.length && supabase) {
+      await supabase.from('settings').upsert({
+        id: SUPABASE_USERS_STORE_ID,
+        business_name: 'ZEVARONE_USERS_STORE',
+        automated_template: JSON.stringify(remainingUsers),
+        gemini_system_prompt: 'ZEVARONE_USERS_STORE',
+        gemini_model: 'v1',
+        auto_reply_enabled: true,
+        default_mode: 'ai_chatbot',
+        updated_at: new Date().toISOString(),
+      });
+    }
+  } catch (err) {
+    console.warn('Error cleaning users on tenant deletion:', err);
   }
-  return false;
+
+  const local = ensureLocalStore();
+  local.tenants = (local.tenants || []).filter((t) => t.id !== id);
+  local.products = (local.products || []).filter((p) => p.tenantId !== id);
+  local.contacts = (local.contacts || []).filter((c) => c.tenantId !== id);
+  local.messages = (local.messages || []).filter((m) => m.tenantId !== id);
+
+  saveLocalStore(local);
+  return true;
 }
 
 /* ==================== PRODUCTS CATALOGUE ==================== */
