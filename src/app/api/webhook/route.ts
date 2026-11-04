@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save incoming customer message in CRM
-    await addMessage({
+    const savedCustomerMsg = await addMessage({
       tenantId: tenant.id,
       contactPhone: customerPhone,
       sender: 'customer',
@@ -145,9 +145,30 @@ export async function POST(req: NextRequest) {
 
     const activeMode = contact.mode || tenant.defaultMode || settings.defaultMode;
 
+    // ==================== BURST & STACKED MESSAGE DEBOUNCER ====================
+    // Customers on WhatsApp frequently send bursts of short messages (e.g. "oik", "ok", "ok", "sure again?").
+    // Wait 2500ms to allow concurrent/stacked messages from the customer to land in the database.
+    await new Promise((r) => setTimeout(r, 2500));
+
+    // Fetch the latest conversation state to check if subsequent messages arrived
+    const freshHistory = await getMessagesForContact(customerPhone, tenant.id);
+    const customerMsgs = freshHistory.filter((m) => m.sender === 'customer');
+
+    // If newer customer messages arrived while waiting, yield this execution!
+    // The webhook handling that newer message will bundle all stacked messages together.
+    const lastCustomerMsg = customerMsgs[customerMsgs.length - 1];
+    if (lastCustomerMsg && lastCustomerMsg.id !== savedCustomerMsg.id) {
+      console.log(
+        `[Batcher] Yielding message "${incomingText}" (${savedCustomerMsg.id}) because newer message "${lastCustomerMsg.text}" (${lastCustomerMsg.id}) arrived.`
+      );
+      return NextResponse.json(
+        { status: 'batched_into_newer_message', currentId: savedCustomerMsg.id, latestId: lastCustomerMsg.id },
+        { status: 200 }
+      );
+    }
+
     // CHECK IF THIS IS CUSTOMER'S FIRST MESSAGE EVER
-    const fullHistory = await getMessagesForContact(customerPhone, tenant.id);
-    const isFirstContact = fullHistory.length <= 1;
+    const isFirstContact = freshHistory.length <= customerMsgs.length;
 
     // SEND ADMIN-CONFIGURED CUSTOM WELCOME MEDIA (MULTIPLE PHOTOS WITH CAPTIONS) ON FIRST MESSAGE
     if (
@@ -197,14 +218,31 @@ export async function POST(req: NextRequest) {
     }
 
     if (activeMode === 'ai_chatbot') {
-      // 1. Fetch conversation history for this tenant
-      const history = await getMessagesForContact(customerPhone, tenant.id);
+      // 1. Collect all stacked customer messages sent in this burst since the last bot/agent reply
+      const lastBotIndex = freshHistory.map((m) => m.sender).lastIndexOf('bot');
+      const lastAgentIndex = freshHistory.map((m) => m.sender).lastIndexOf('agent');
+      const lastReplyIndex = Math.max(lastBotIndex, lastAgentIndex);
+
+      const unrepliedCustomerMessages = (
+        lastReplyIndex >= 0 ? freshHistory.slice(lastReplyIndex + 1) : freshHistory
+      ).filter((m) => m.sender === 'customer' && m.text && m.text.trim());
+
+      // Deduplicate consecutive identical messages (e.g. if customer typed "ok" multiple times)
+      const stackedLines: string[] = [];
+      for (const msg of unrepliedCustomerMessages) {
+        const t = msg.text.trim();
+        if (stackedLines.length === 0 || stackedLines[stackedLines.length - 1].toLowerCase() !== t.toLowerCase()) {
+          stackedLines.push(t);
+        }
+      }
+
+      const finalCustomerMessage = stackedLines.length > 0 ? stackedLines.join('\n') : incomingText;
 
       // 2. Call Gemini AI with this tenant's custom persona prompt, catalogue & optional custom API key
       const tenantProducts = await getProducts(tenant.id);
       const aiReply = await generateGeminiReply({
-        customerMessage: incomingText,
-        history,
+        customerMessage: finalCustomerMessage,
+        history: freshHistory,
         systemPrompt: tenant.geminiSystemPrompt || settings.geminiSystemPrompt,
         contactName: contact.name,
         customApiKey: tenant.geminiApiKey,

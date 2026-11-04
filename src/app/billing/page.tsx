@@ -48,6 +48,15 @@ const PLAN_FEATURES = [
   { icon: ShieldCheck, label: 'Meta Cloud API and uptime SLA' },
 ];
 
+const CANCELLATION_REASONS = [
+  'Pricing / Too expensive for my current business stage',
+  'Missing key features or integrations I need',
+  'Setup difficulties or technical complications',
+  'Temporary pause / Low business messaging volume this month',
+  'Switching to another CRM / platform',
+  'Other reason',
+];
+
 const PRICES = {
   monthly: { perMonth: '5,000', total: '5,000 LKR', cadence: 'every 30 days' },
   annual: { perMonth: '4,500', total: '54,000 LKR', cadence: 'once a year' },
@@ -76,6 +85,8 @@ function BillingContent() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'cancel' | 'resume' | null>(null);
+  const [cancelReason, setCancelReason] = useState(CANCELLATION_REASONS[0]);
+  const [cancelFeedback, setCancelFeedback] = useState('');
 
   const [billingDetails, setBillingDetails] = useState<{
     card?: { brand?: string; last4?: string; expMonth?: number; expYear?: number } | null;
@@ -434,7 +445,11 @@ function BillingContent() {
       const res = await fetch('/api/stripe/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({
+          action,
+          reason: action === 'cancel' ? cancelReason : undefined,
+          feedback: action === 'cancel' ? cancelFeedback : undefined,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -1083,6 +1098,53 @@ function BillingContent() {
                   }. After that, your card won’t be charged again.`
                 : 'Your saved card will be charged automatically again at the next renewal date.'}
             </p>
+
+            {/* Cancellation Reason Survey */}
+            {confirmAction === 'cancel' && (
+              <div className="mt-4 space-y-3.5 text-left border-t border-slate-100 pt-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-2">
+                    Why are you cancelling? <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="space-y-1.5">
+                    {CANCELLATION_REASONS.map((r) => (
+                      <label
+                        key={r}
+                        className={`flex items-start gap-2.5 p-2 rounded-xl border text-xs cursor-pointer transition ${
+                          cancelReason === r
+                            ? 'bg-emerald-50/70 border-[#008069] text-slate-900 font-semibold shadow-xs'
+                            : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="cancellationReason"
+                          value={r}
+                          checked={cancelReason === r}
+                          onChange={() => setCancelReason(r)}
+                          className="mt-0.5 text-[#008069] focus:ring-[#008069]"
+                        />
+                        <span className="leading-snug">{r}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1">
+                    How could we have made your experience better? (Optional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={cancelFeedback}
+                    onChange={(e) => setCancelFeedback(e.target.value)}
+                    placeholder="Tell us what was missing, or how we can improve..."
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#008069] focus:bg-white transition"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
               <button
                 type="button"

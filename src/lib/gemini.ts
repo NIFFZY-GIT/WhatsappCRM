@@ -184,7 +184,7 @@ export async function generateGeminiReply({
   }
 
   return {
-    text: `Hello ${contactName || 'there'}! Thank you for contacting us. We received your message: "${customerMessage}". An agent will respond shortly!`,
+    text: `Hello ${contactName || 'there'}! Thank you for contacting us. We have received your message and an agent will assist you shortly.`,
     error: friendlyError,
   };
 }
