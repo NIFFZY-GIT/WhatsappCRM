@@ -966,6 +966,9 @@ export async function updateUserSubscription(
     billingInterval?: 'monthly' | 'annual';
     subscriptionExpiresAt?: string;
     cancelAtPeriodEnd?: boolean;
+    cancellationReason?: string;
+    cancellationFeedback?: string;
+    cancelledAt?: string;
   }
 ): Promise<UserAccount | undefined> {
   const currentUsers = await getUsers();
@@ -982,7 +985,17 @@ export async function updateUserSubscription(
     if (stripeData?.plan) updatedUsers[idx].subscriptionPlan = stripeData.plan;
     if (stripeData?.billingInterval) updatedUsers[idx].billingInterval = stripeData.billingInterval;
     if (stripeData?.subscriptionExpiresAt) updatedUsers[idx].subscriptionExpiresAt = stripeData.subscriptionExpiresAt;
-    if (stripeData?.cancelAtPeriodEnd !== undefined) updatedUsers[idx].cancelAtPeriodEnd = stripeData.cancelAtPeriodEnd;
+    if (stripeData?.cancelAtPeriodEnd !== undefined) {
+      updatedUsers[idx].cancelAtPeriodEnd = stripeData.cancelAtPeriodEnd;
+      if (stripeData.cancelAtPeriodEnd === false) {
+        delete updatedUsers[idx].cancellationReason;
+        delete updatedUsers[idx].cancellationFeedback;
+        delete updatedUsers[idx].cancelledAt;
+      }
+    }
+    if (stripeData?.cancellationReason !== undefined) updatedUsers[idx].cancellationReason = stripeData.cancellationReason;
+    if (stripeData?.cancellationFeedback !== undefined) updatedUsers[idx].cancellationFeedback = stripeData.cancellationFeedback;
+    if (stripeData?.cancelledAt !== undefined) updatedUsers[idx].cancelledAt = stripeData.cancelledAt;
 
     // Save to Supabase
     const supabase = getSupabase();

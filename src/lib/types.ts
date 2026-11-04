@@ -103,6 +103,9 @@ export interface UserAccount {
   stripeSubscriptionId?: string;
   stripeSessionId?: string;
   cancelAtPeriodEnd?: boolean;
+  cancellationReason?: string;
+  cancellationFeedback?: string;
+  cancelledAt?: string;
   createdAt: string;
 }
 

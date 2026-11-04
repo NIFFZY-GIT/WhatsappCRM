@@ -158,7 +158,8 @@ export async function getStripeCustomerPaymentMethod(customerId: string): Promis
  */
 export async function cancelStripeSubscription(
   subscriptionId: string,
-  cancelAtPeriodEnd = true
+  cancelAtPeriodEnd = true,
+  metadata?: Record<string, string>
 ): Promise<Stripe.Subscription | null> {
   const stripe = getStripe();
   if (!stripe) return null;
@@ -167,6 +168,7 @@ export async function cancelStripeSubscription(
     if (cancelAtPeriodEnd) {
       return await stripe.subscriptions.update(subscriptionId, {
         cancel_at_period_end: true,
+        ...(metadata ? { metadata } : {}),
       });
     } else {
       return await stripe.subscriptions.cancel(subscriptionId);

@@ -42,6 +42,9 @@ export async function GET(req: NextRequest) {
       billingInterval: latestUser.billingInterval || 'monthly',
       subscriptionExpiresAt: latestUser.subscriptionExpiresAt,
       cancelAtPeriodEnd: latestUser.cancelAtPeriodEnd || subscriptionInfo?.cancelAtPeriodEnd || false,
+      cancellationReason: latestUser.cancellationReason,
+      cancellationFeedback: latestUser.cancellationFeedback,
+      cancelledAt: latestUser.cancelledAt,
     });
   } catch (err: any) {
     console.error('Stripe status API error:', err);

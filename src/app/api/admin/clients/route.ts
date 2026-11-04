@@ -19,6 +19,9 @@ export async function GET(req: NextRequest) {
     const activeSubscriptions = workspaces.filter(
       (w) => w.owner?.subscriptionStatus === 'active'
     ).length;
+    const cancelledSubscriptions = workspaces.filter(
+      (w) => Boolean(w.owner?.cancelAtPeriodEnd || w.owner?.cancellationReason)
+    ).length;
     const totalContacts = workspaces.reduce((sum, w) => sum + w.totalContacts, 0);
     const totalMessages = workspaces.reduce((sum, w) => sum + w.totalMessages, 0);
     const totalAiMessages = workspaces.reduce((sum, w) => sum + w.aiHandledMessages, 0);
@@ -39,6 +42,7 @@ export async function GET(req: NextRequest) {
         totalClients,
         activeSubscriptions,
         inactiveSubscriptions: totalClients - activeSubscriptions,
+        cancelledSubscriptions,
         totalContacts,
         totalMessages,
         totalAiMessages,
