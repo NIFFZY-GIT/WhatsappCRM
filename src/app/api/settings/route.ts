@@ -24,7 +24,7 @@ export async function GET() {
       hasSupabase: isSupabaseConfigured(),
       verifyToken: waConfig.verifyToken,
       phoneNumberId: waConfig.phoneNumberId ? `${waConfig.phoneNumberId.slice(0, 4)}...${waConfig.phoneNumberId.slice(-4)}` : null,
-      appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+      appUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://crm.zevarone.com',
     },
   });
 }

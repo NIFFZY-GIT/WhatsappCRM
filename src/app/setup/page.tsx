@@ -111,7 +111,7 @@ export default function SetupPage() {
     }
   };
 
-  const callbackUrl = `${envStatus?.appUrl || 'https://whatsapp-crm-orpin.vercel.app'}/api/webhook`;
+  const callbackUrl = `${envStatus?.appUrl || 'https://crm.zevarone.com'}/api/webhook`;
   const verifyToken = envStatus?.verifyToken || 'v2Bfr7BVfZAkIiYP5G5rZBFukMKYvejXTV9XmcbNL28y2yT';
 
   if (currentUser && !isZevaroneAdmin(currentUser)) {
@@ -239,7 +239,7 @@ export default function SetupPage() {
             <li>
               In <a href="https://developers.facebook.com/apps/1273989728252949/settings/basic/" target="_blank" rel="noreferrer" className="text-[#00A884] font-bold hover:underline inline-flex items-center gap-0.5">App Settings → Basic <ExternalLink className="w-3 h-3" /></a>, paste your Privacy Policy URL:
               <div className="mt-1 font-mono text-[11px] bg-[#F0F2F5] border border-[#E9EDEF] p-2 rounded-lg text-[#111B21]">
-                https://whatsapp-crm-orpin.vercel.app/privacy
+                https://crm.zevarone.com/privacy
               </div>
             </li>
             <li>

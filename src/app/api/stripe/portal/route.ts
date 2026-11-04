@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const appUrl = (
       process.env.NEXT_PUBLIC_APP_URL ||
       req.nextUrl.origin ||
-      'https://whatsapp-crm-orpin.vercel.app'
+      'https://crm.zevarone.com'
     ).replace(/\/$/, '');
 
     const portalUrl = await createStripeCustomerPortalSession({

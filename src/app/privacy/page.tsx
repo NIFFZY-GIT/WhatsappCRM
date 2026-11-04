@@ -79,7 +79,7 @@ export default function PrivacyPolicy() {
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mt-2 text-xs">
               <p><strong>ZEVARONE Digital Services</strong></p>
               <p>WhatsApp: +94 77 228 4950</p>
-              <p>Website: https://whatsapp-crm-orpin.vercel.app</p>
+              <p>Website: https://crm.zevarone.com</p>
             </div>
           </section>
         </div>

@@ -74,7 +74,7 @@ export async function sendWelcomeEmail({
   to,
   name,
   businessName,
-  loginUrl = 'https://whatsapp-crm-orpin.vercel.app/login',
+  loginUrl = 'https://crm.zevarone.com/login',
 }: {
   to: string;
   name: string;
@@ -251,13 +251,13 @@ export async function sendPaymentReceiptEmail({
 
       <!-- Action -->
       <div style="text-align: center; margin: 32px 0;">
-        <a href="https://whatsapp-crm-orpin.vercel.app/inbox" style="background-color: #008069; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-size: 14px; font-weight: bold; display: inline-block;">
+        <a href="https://crm.zevarone.com/inbox" style="background-color: #008069; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-size: 14px; font-weight: bold; display: inline-block;">
           Launch Live Shared Inbox &rarr;
         </a>
       </div>
 
       <p style="font-size: 13px; color: #54656F; margin: 24px 0 0 0; line-height: 1.6;">
-        You can manage your subscription, download tax invoices, or update your payment card anytime from your <a href="https://whatsapp-crm-orpin.vercel.app/billing" style="color: #008069; font-weight: bold; text-decoration: none;">Billing Dashboard</a>.
+        You can manage your subscription, download tax invoices, or update your payment card anytime from your <a href="https://crm.zevarone.com/billing" style="color: #008069; font-weight: bold; text-decoration: none;">Billing Dashboard</a>.
       </p>
     </div>
 
@@ -314,7 +314,7 @@ export async function sendHumanSupportAlertEmail({
       </div>
 
       <div style="text-align: center;">
-        <a href="https://whatsapp-crm-orpin.vercel.app/inbox" style="background-color: #111B21; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 13px; font-weight: bold; display: inline-block;">
+        <a href="https://crm.zevarone.com/inbox" style="background-color: #111B21; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 13px; font-weight: bold; display: inline-block;">
           Take Over Chat in Shared Inbox &rarr;
         </a>
       </div>

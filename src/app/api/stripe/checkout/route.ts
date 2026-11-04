@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const stripe = getStripe();
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin || 'https://whatsapp-crm-orpin.vercel.app').replace(/\/$/, '');
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin || 'https://crm.zevarone.com').replace(/\/$/, '');
 
     if (!stripe) {
       return NextResponse.json(
