@@ -482,7 +482,7 @@ export default function LoginPage() {
                   ? 'Sign in to your inbox, AI replies and product catalog.'
                   : regStep === 'verify'
                   ? `Enter the 6-digit code dispatched to ${regEmail}.`
-                  : 'Set up your WhatsApp CRM in under a minute.'}
+                  : 'Set up your ZEVARONE. CRM in under a minute.'}
               </p>
             </div>
 

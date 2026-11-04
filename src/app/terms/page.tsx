@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Terms of Service | ZEVARONE',
-  description: 'Terms of Service for ZEVARONE WhatsApp CRM and Customer Communications',
+  title: 'Terms of Service | ZEVARONE. CRM',
+  description: 'Terms of Service for ZEVARONE. CRM and Customer Communications',
 };
 
 export default function TermsOfService() {

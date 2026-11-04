@@ -40,7 +40,7 @@ export default function Navbar({ showLinks = true }: NavbarProps) {
         <Link href="/" className="flex items-center gap-3 group">
           <img
             src="/zevaroneassets/Asset 22.png"
-            alt="ZEVARONE"
+            alt="ZEVARONE. CRM"
             className="h-8 sm:h-9 w-auto object-contain transition group-hover:opacity-90"
           />
         </Link>

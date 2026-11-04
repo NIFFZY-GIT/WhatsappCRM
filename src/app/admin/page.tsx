@@ -322,7 +322,7 @@ export default function AdminMonitorPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                  Zevarone Super Admin Monitor
+                  ZEVARONE. CRM Master Monitor
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#111B21] text-emerald-400 border border-[#2A3942]">
                   MASTER ACCESS

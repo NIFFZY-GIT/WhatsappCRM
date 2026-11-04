@@ -532,7 +532,7 @@ export default function LandingPage() {
           <Link href="/" className="flex items-center gap-3 group">
             <img
               src="/zevaroneassets/Asset 22.png"
-              alt="ZEVARONE"
+              alt="ZEVARONE. CRM"
               className="h-8 sm:h-9 w-auto object-contain transition group-hover:opacity-90"
             />
           </Link>
@@ -796,7 +796,7 @@ export default function LandingPage() {
 
             <Reveal delay={120}>
               <div className="h-full rounded-2xl border-2 border-[#008069] bg-emerald-50/50 p-7 shadow-lg shadow-[#008069]/10">
-                <p className="text-sm font-bold text-[#008069]">ZEVARONE AI CRM</p>
+                <p className="text-sm font-bold text-[#008069]">ZEVARONE. CRM</p>
                 <h3 className="mt-1 text-xl font-bold text-slate-900">Instant, automated and shared</h3>
                 <ul className="mt-5 space-y-3.5 text-sm text-slate-700">
                   {[
@@ -859,7 +859,7 @@ export default function LandingPage() {
           <Reveal>
             <div className="relative max-w-lg mx-auto rounded-3xl border-2 border-[#008069] bg-white p-8 shadow-2xl shadow-[#008069]/15 overflow-hidden">
               <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-[#00A884]/10 blur-2xl" />
-              <h3 className="text-2xl font-extrabold">WhatsApp CRM &amp; Zevarone AI Pro</h3>
+              <h3 className="text-2xl font-extrabold">ZEVARONE. CRM Pro</h3>
               <p className="mt-1 text-sm text-slate-500">For shops, brands and service businesses of any size.</p>
 
               <div className="mt-6 flex items-baseline gap-2">
@@ -988,13 +988,11 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-slate-200 py-10 px-4 sm:px-6 lg:px-8 text-sm text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-[#008069] flex items-center justify-center text-white font-bold text-sm">
-              W
-            </div>
-            <div>
-              <span className="font-bold text-slate-900">ZEVARONE WhatsApp AI CRM</span>
-              <p className="text-xs text-slate-400">© 2026 Zevarone Group. All rights reserved.</p>
-            </div>
+            <img
+              src="/zevaroneassets/Asset 22.png"
+              alt="ZEVARONE. CRM"
+              className="h-7 w-auto object-contain"
+            />
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 font-medium">
@@ -1010,7 +1008,7 @@ export default function LandingPage() {
             <div className="bg-[#111B21] px-3 py-1.5 rounded-lg flex items-center">
               <Image
                 src="/newlogos/Asset 13.svg"
-                alt="ZEVARONE"
+                alt="ZEVARONE. CRM"
                 width={80}
                 height={16}
                 className="h-3.5 w-auto object-contain"

@@ -248,7 +248,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="h-6 px-3 bg-[#111B21] rounded-md flex items-center justify-center shadow-xs">
               <img
                 src="/newlogos/Asset 13.svg"
-                alt="ZEVARONE"
+                alt="ZEVARONE. CRM"
                 className="h-3 w-auto object-contain"
               />
             </div>

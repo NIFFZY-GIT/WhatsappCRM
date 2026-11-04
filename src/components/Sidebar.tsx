@@ -113,8 +113,8 @@ export default function Sidebar() {
             <Sparkles className="w-4 h-4 text-[#111B21]" />
           </div>
           <div>
-            <h1 className="font-bold text-sm tracking-tight leading-none text-white">ZEVARONE</h1>
-            <p className="text-[10px] text-[#25D366] font-medium">WhatsApp AI Hub</p>
+            <h1 className="font-bold text-sm tracking-tight leading-none text-white">ZEVARONE. CRM</h1>
+            <p className="text-[10px] text-[#25D366] font-medium">WhatsApp Cloud Platform</p>
           </div>
         </div>
 
@@ -149,12 +149,12 @@ export default function Sidebar() {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="font-extrabold text-base tracking-tight text-white">ZEVARONE</h1>
+                <h1 className="font-extrabold text-base tracking-tight text-white">ZEVARONE. CRM</h1>
                 <span className="text-[9px] bg-[#00A884]/20 text-[#25D366] font-bold px-1.5 py-0.5 rounded border border-[#00A884]/40">
-                  AI CRM
+                  Pro
                 </span>
               </div>
-              <p className="text-[11px] text-[#8696A0]">WhatsApp Cloud &amp; Zevarone AI</p>
+              <p className="text-[11px] text-[#8696A0]">WhatsApp Cloud &amp; Sales AI</p>
             </div>
           </div>
 

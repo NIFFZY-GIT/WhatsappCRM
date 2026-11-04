@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy | ZEVARONE',
-  description: 'Privacy Policy for ZEVARONE WhatsApp CRM and Customer Communications',
+  title: 'Privacy Policy | ZEVARONE. CRM',
+  description: 'Privacy Policy for ZEVARONE. CRM and Customer Communications',
 };
 
 export default function PrivacyPolicy() {

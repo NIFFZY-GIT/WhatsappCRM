@@ -4,7 +4,7 @@ const SMTP_HOST = process.env.SMTP_HOST || 'smtp.zoho.com';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
 const SMTP_USER = process.env.SMTP_USER || 'no-reply@zevarone.com';
 const SMTP_PASS = process.env.SMTP_PASS || 'dnD6QWis1aV7';
-const SMTP_FROM = process.env.SMTP_FROM || `ZEVARONE WhatsApp CRM <${SMTP_USER}>`;
+const SMTP_FROM = process.env.SMTP_FROM || `ZEVARONE. CRM <${SMTP_USER}>`;
 
 export function getTransporter() {
   return nodemailer.createTransport({
@@ -81,7 +81,7 @@ export async function sendWelcomeEmail({
   businessName: string;
   loginUrl?: string;
 }) {
-  const subject = `Welcome to ZEVARONE WhatsApp CRM — ${businessName} Workspace Created!`;
+  const subject = `Welcome to ZEVARONE. CRM — ${businessName} Workspace Created!`;
   const html = `
 <!DOCTYPE html>
 <html>
@@ -98,12 +98,12 @@ export async function sendWelcomeEmail({
         <tr>
           <td>
             <div style="display: inline-block; background-color: #008069; color: #ffffff; width: 36px; height: 36px; line-height: 36px; text-align: center; font-weight: bold; font-size: 18px; border-radius: 8px;">W</div>
-            <span style="font-size: 18px; font-weight: bold; color: #ffffff; margin-left: 10px; vertical-align: middle; letter-spacing: -0.5px;">ZEVARONE</span>
+            <span style="font-size: 18px; font-weight: bold; color: #ffffff; margin-left: 10px; vertical-align: middle; letter-spacing: -0.5px;">ZEVARONE. CRM</span>
             <span style="font-size: 11px; background: #202C33; color: #25D366; font-weight: bold; padding: 2px 8px; border-radius: 4px; margin-left: 6px; vertical-align: middle;">AI CRM</span>
           </td>
         </tr>
       </table>
-      <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 24px 0 6px 0; letter-spacing: -0.5px;">Welcome to Your WhatsApp AI Workspace!</h1>
+      <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 24px 0 6px 0; letter-spacing: -0.5px;">Welcome to Your ZEVARONE. CRM Workspace!</h1>
       <p style="color: #AEBAC1; font-size: 13px; margin: 0;">Your dedicated customer communication hub is ready for ${businessName}.</p>
     </div>
 
@@ -112,7 +112,7 @@ export async function sendWelcomeEmail({
       <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">Hello <strong>${name}</strong>,</p>
       
       <p style="font-size: 14px; line-height: 1.6; color: #54656F; margin: 0 0 24px 0;">
-        Thank you for joining <strong>ZEVARONE WhatsApp Business CRM</strong>. Your dedicated business tenant has been created. You can now connect your Meta WhatsApp phone number, configure your 24/7 Zevarone AI sales concierge, and start converting leads into orders.
+        Thank you for joining <strong>ZEVARONE. CRM</strong>. Your dedicated business tenant has been created. You can now connect your Meta WhatsApp phone number, configure your 24/7 Zevarone AI sales concierge, and start converting leads into orders.
       </p>
 
       <!-- Account Summary Card -->
@@ -357,7 +357,7 @@ export async function sendVerificationCodeEmail({
         <tr>
           <td align="center">
             <div style="display: inline-block; background-color: #008069; color: #ffffff; width: 36px; height: 36px; line-height: 36px; text-align: center; font-weight: bold; font-size: 18px; border-radius: 8px;">W</div>
-            <span style="font-size: 18px; font-weight: bold; color: #ffffff; margin-left: 10px; vertical-align: middle; letter-spacing: -0.5px;">ZEVARONE</span>
+            <span style="font-size: 18px; font-weight: bold; color: #ffffff; margin-left: 10px; vertical-align: middle; letter-spacing: -0.5px;">ZEVARONE. CRM</span>
             <span style="font-size: 11px; background: #202C33; color: #25D366; font-weight: bold; padding: 2px 8px; border-radius: 4px; margin-left: 6px; vertical-align: middle;">AI CRM</span>
           </td>
         </tr>

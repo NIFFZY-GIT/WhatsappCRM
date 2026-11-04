@@ -582,7 +582,7 @@ function BillingContent() {
           <section className={`${panel} p-5 sm:p-7`} aria-labelledby="plan-h">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 id="plan-h" className="text-lg font-bold">WhatsApp CRM &amp; Zevarone AI Pro</h2>
+                <h2 id="plan-h" className="text-lg font-bold">ZEVARONE. CRM Pro</h2>
                 <p className="mt-0.5 text-sm text-slate-500">One plan, everything included.</p>
               </div>
 
