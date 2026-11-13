@@ -111,7 +111,7 @@ export default function Sidebar() {
         <Link href="/" className="flex items-center gap-2">
           <div className=" px-2.5 py-1.5 rounded-lg flex items-center shadow-xs">
             <img
-              src="/zevaroneassets/Asset 24.png"
+              src="/zevaroneassets/Asset 22.png"
               alt="ZEVARONE.CRM"
               className="h-5 w-auto object-contain"
             />
@@ -147,7 +147,7 @@ export default function Sidebar() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className=" px-3 py-2 rounded-xl flex items-center shadow-xs transition ">
               <img
-                src="/zevaroneassets/Asset 24.png"
+                src="/zevaroneassets/Asset 22.png"
                 alt="ZEVARONE.CRM"
                 className="h-6 w-auto object-contain"
               />

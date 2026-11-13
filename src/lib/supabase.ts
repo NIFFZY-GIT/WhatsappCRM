@@ -28,15 +28,59 @@ export function getSupabaseDetails() {
   };
 }
 
+let lastFailureTimestamp = 0;
+const OFFLINE_COOLDOWN_MS = 60 * 1000; // 60 seconds cooldown before retrying cloud database
+
+export function markSupabaseOffline(reason?: any) {
+  lastFailureTimestamp = Date.now();
+  if (reason) {
+    const msg = reason?.message || reason?.details || JSON.stringify(reason);
+    console.warn(`[Cloud Database] Temporary offline circuit-breaker active (cooldown: ${OFFLINE_COOLDOWN_MS / 1000}s). Reason: ${msg}`);
+  }
+}
+
+export function isSupabaseHealthy(): boolean {
+  if (!isSupabaseConfigured()) return false;
+  if (Date.now() - lastFailureTimestamp < OFFLINE_COOLDOWN_MS) {
+    return false;
+  }
+  return true;
+}
+
 let supabaseInstance: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient | null {
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured() || !isSupabaseHealthy()) {
     return null;
   }
   if (!supabaseInstance) {
     supabaseInstance = createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false },
+      global: {
+        fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
+          if (!isSupabaseHealthy()) {
+            const err = new Error('Cloud Database is currently unreachable or paused');
+            err.name = 'AbortError';
+            throw err;
+          }
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          try {
+            const res = await fetch(input, {
+              ...init,
+              signal: init?.signal || controller.signal,
+            });
+            return res;
+          } catch (err: any) {
+            markSupabaseOffline(err);
+            const abortErr = new Error(err?.message || 'Cloud Database connection failed');
+            abortErr.name = 'AbortError';
+            throw abortErr;
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        },
+      },
     });
   }
   return supabaseInstance;

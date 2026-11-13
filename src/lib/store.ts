@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Contact, ChatMessage, AppSettings, Tenant, ProductItem, BotMode, UserAccount } from './types';
-import { getSupabase } from './supabase';
+import { getSupabase, markSupabaseOffline } from './supabase';
 
 const DATA_DIR = path.join(process.cwd(), '.data');
 const STORE_FILE = path.join(DATA_DIR, 'store.json');
@@ -174,10 +174,13 @@ export async function getTenants(): Promise<Tenant[]> {
   if (supabase) {
     try {
       const { data, error } = await supabase.from('tenants').select('*').order('created_at', { ascending: true });
-      if (!error && data && data.length > 0) {
+      if (error) {
+        markSupabaseOffline(error);
+      } else if (data && data.length > 0) {
         tenantList = data.map(parseTenantRow);
       }
     } catch (e) {
+      markSupabaseOffline(e);
       console.warn('Supabase getTenants error, using local fallback:', e);
     }
   }
@@ -295,9 +298,11 @@ export async function upsertTenant(tenantData: Partial<Tenant> & { name: string 
 
       const { error: upsertErr } = await supabase.from('tenants').upsert(row);
       if (upsertErr) {
+        markSupabaseOffline(upsertErr);
         console.error('Supabase upsertTenant error:', upsertErr);
       }
     } catch (e) {
+      markSupabaseOffline(e);
       console.error('Supabase upsertTenant exception:', e);
     }
   }
@@ -825,7 +830,9 @@ export async function getSettings(): Promise<AppSettings> {
   if (supabase) {
     try {
       const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single();
-      if (!error && data) {
+      if (error) {
+        markSupabaseOffline(error);
+      } else if (data) {
         return {
           defaultMode: data.default_mode,
           automatedTemplate: data.automated_template,
@@ -836,6 +843,7 @@ export async function getSettings(): Promise<AppSettings> {
         };
       }
     } catch (e) {
+      markSupabaseOffline(e);
       console.warn('Supabase getSettings error:', e);
     }
   }
@@ -884,7 +892,9 @@ export async function getUsers(): Promise<UserAccount[]> {
         .eq('id', SUPABASE_USERS_STORE_ID)
         .maybeSingle();
 
-      if (!error && data?.automated_template) {
+      if (error) {
+        markSupabaseOffline(error);
+      } else if (data?.automated_template) {
         try {
           const parsed = JSON.parse(data.automated_template);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -899,6 +909,7 @@ export async function getUsers(): Promise<UserAccount[]> {
         }
       }
     } catch (err) {
+      markSupabaseOffline(err);
       console.warn('Supabase getUsers error, falling back to local store:', err);
     }
   }
@@ -951,7 +962,7 @@ export async function upsertUser(user: Partial<UserAccount> & { email: string; n
   const supabase = getSupabase();
   if (supabase) {
     try {
-      await supabase.from('settings').upsert({
+      const { error } = await supabase.from('settings').upsert({
         id: SUPABASE_USERS_STORE_ID,
         business_name: 'ZEVARONE_USERS_STORE',
         automated_template: JSON.stringify(updatedUsers),
@@ -961,7 +972,12 @@ export async function upsertUser(user: Partial<UserAccount> & { email: string; n
         default_mode: 'ai_chatbot',
         updated_at: new Date().toISOString(),
       });
+      if (error) {
+        markSupabaseOffline(error);
+        console.error('Supabase upsertUser error:', error);
+      }
     } catch (e) {
+      markSupabaseOffline(e);
       console.error('Supabase upsertUser error:', e);
     }
   }
