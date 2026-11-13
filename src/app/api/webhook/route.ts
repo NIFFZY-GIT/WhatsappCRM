@@ -70,6 +70,17 @@ export async function POST(req: NextRequest) {
     const changes = entry?.changes?.[0];
     const value = changes?.value;
 
+    // Log any delivery status updates (e.g. sent, delivered, failed)
+    if (value?.statuses && value.statuses.length > 0) {
+      for (const st of value.statuses) {
+        if (st.status === 'failed' || st.errors) {
+          console.error('[WhatsApp Status Event] Message delivery failure:', JSON.stringify(st.errors || st));
+        } else {
+          console.log(`[WhatsApp Status Event] Message ${st.id} status: ${st.status} (recipient: ${st.recipient_id})`);
+        }
+      }
+    }
+
     const messages = value?.messages;
     if (!messages || messages.length === 0) {
       return NextResponse.json({ status: 'no_messages' }, { status: 200 });
