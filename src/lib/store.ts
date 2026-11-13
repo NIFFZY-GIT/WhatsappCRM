@@ -31,7 +31,7 @@ const INITIAL_TENANTS: Tenant[] = [
     id: 'tenant_zevarone',
     name: 'Zevarone Luxury Jewellers',
     slug: 'zevarone',
-    whatsappNumber: '+94 77 228 4950',
+    whatsappNumber: '+1 555-203-9239',
     phoneNumberId: '1429442563582361',
     geminiSystemPrompt:
       'You are the AI concierge for Zevarone Luxury Fine Jewelry. You answer inquiries about gold, diamonds, bridal collections, custom jewelry crafting, and appointments with a polite, sophisticated tone.',
