@@ -41,18 +41,30 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
 
   // Production Auth Route Guard: Redirect unauthenticated users to /login
+  const publicRoutes = ['/', '/login', '/privacy', '/terms'];
+  const isPublicRoute = publicRoutes.includes(pathname);
+
   useEffect(() => {
-    const publicRoutes = ['/', '/login', '/privacy', '/terms'];
-    if (!isLoading && !currentUser && !publicRoutes.includes(pathname)) {
+    if (!isLoading && !currentUser && !isPublicRoute) {
       router.push('/login');
     }
-  }, [isLoading, currentUser, pathname, router]);
+  }, [isLoading, currentUser, pathname, router, isPublicRoute]);
 
   // Landing page and Auth page render with full width, custom header & footer
   if (pathname === '/' || pathname === '/login') {
     return (
       <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-sans text-[#111B21]">
         <ErrorBoundary>{children}</ErrorBoundary>
+      </div>
+    );
+  }
+
+  // Smooth loading state for protected routes while session verifies
+  if (!isPublicRoute && isLoading) {
+    return (
+      <div className="min-h-screen bg-[#111B21] flex flex-col items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#008069] border-t-transparent rounded-full animate-spin mb-3" />
+        <p className="text-xs text-slate-400 font-medium tracking-wide">Loading workspace...</p>
       </div>
     );
   }

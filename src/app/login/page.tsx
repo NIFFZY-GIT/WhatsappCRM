@@ -185,7 +185,15 @@ function strengthOf(pw: string) {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { notify, refreshData } = useApp();
+  const { notify, refreshData, currentUser, setCurrentUser } = useApp();
+
+  // If already logged in, redirect directly to dashboard
+  useEffect(() => {
+    if (currentUser) {
+      const target = currentUser.subscriptionStatus === 'active' ? '/inbox' : '/billing';
+      window.location.href = target;
+    }
+  }, [currentUser]);
 
   const [mode, setMode] = useState<'signin' | 'register'>('signin');
   const [loading, setLoading] = useState(false);
@@ -259,13 +267,12 @@ export default function LoginPage() {
         message: `Signed in as ${data.user.name} (${data.user.businessName}).`,
       });
 
-      await refreshData();
-
-      if (data.user.subscriptionStatus === 'active') {
-        router.push('/inbox');
-      } else {
-        router.push('/billing');
+      if (setCurrentUser) {
+        setCurrentUser(data.user);
       }
+
+      const target = data.user.subscriptionStatus === 'active' ? '/inbox' : '/billing';
+      window.location.href = target;
     } catch (err: any) {
       fail(err.message || 'Error signing in');
     } finally {
@@ -354,8 +361,11 @@ export default function LoginPage() {
           'Your dedicated WhatsApp CRM tenant has been provisioned. Redirecting to billing...',
       });
 
-      await refreshData();
-      router.push('/billing');
+      if (setCurrentUser && data.user) {
+        setCurrentUser(data.user);
+      }
+
+      window.location.href = '/billing';
     } catch (err: any) {
       fail(err.message || 'Error creating account');
     } finally {
