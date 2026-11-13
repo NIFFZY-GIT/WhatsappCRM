@@ -111,7 +111,7 @@ export default function SetupPage() {
     }
   };
 
-  const callbackUrl = `${envStatus?.appUrl || 'https://crm.zevarone.com'}/api/webhook`;
+  const callbackUrl = 'https://crm.zevarone.com/api/webhook';
   const verifyToken = envStatus?.verifyToken || 'v2Bfr7BVfZAkIiYP5G5rZBFukMKYvejXTV9XmcbNL28y2yT';
 
   if (currentUser && !isZevaroneAdmin(currentUser)) {
