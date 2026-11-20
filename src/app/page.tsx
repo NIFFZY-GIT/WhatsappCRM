@@ -1000,6 +1000,7 @@ export default function LandingPage() {
             <a href="#pricing" className="hover:text-[#008069] transition">Pricing</a>
             <Link href="/privacy" className="hover:text-[#008069] transition">Privacy policy</Link>
             <Link href="/terms" className="hover:text-[#008069] transition">Terms</Link>
+            <Link href="/data-deletion" className="hover:text-[#008069] transition">Data deletion</Link>
             <Link href="/login" className="hover:text-[#008069] transition">Log in</Link>
           </div>
 

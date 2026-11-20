@@ -41,7 +41,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [showNotificationMenu, setShowNotificationMenu] = useState(false);
 
   // Production Auth Route Guard: Redirect unauthenticated users to /login
-  const publicRoutes = ['/', '/login', '/privacy', '/terms'];
+  const publicRoutes = ['/', '/login', '/privacy', '/terms', '/data-deletion'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
   useEffect(() => {
@@ -50,8 +50,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, currentUser, pathname, router, isPublicRoute]);
 
-  // Landing page and Auth page render with full width, custom header & footer
-  if (pathname === '/' || pathname === '/login') {
+  // Public pages render with full width, clean layout without sidebar
+  if (isPublicRoute) {
     return (
       <div className="min-h-screen bg-[#F0F2F5] flex flex-col font-sans text-[#111B21]">
         <ErrorBoundary>{children}</ErrorBoundary>
